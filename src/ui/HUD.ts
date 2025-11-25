@@ -1,16 +1,22 @@
+import type { PartsManager } from '../core/PartsManager'
+
 export type HUDOptions = {
   container: HTMLElement
+  partsManager: PartsManager
 }
 
 export class HUD {
   private readonly root: HTMLDivElement
   private readonly scoreDisplay: HTMLSpanElement
   private readonly hpDisplay: HTMLSpanElement
+  private readonly partsManager: PartsManager
 
   private score = 0
   private hp = 100
 
   constructor(options: HUDOptions) {
+    this.partsManager = options.partsManager
+
     this.root = document.createElement('div')
     this.root.style.cssText = `
       position: absolute;
@@ -25,6 +31,8 @@ export class HUD {
       z-index: 100;
     `
 
+    const maxHP = this.getMaxHP()
+
     const scoreLabel = document.createElement('div')
     scoreLabel.style.cssText = `
       margin-bottom: 8px;
@@ -36,7 +44,7 @@ export class HUD {
     hpLabel.style.cssText = `
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     `
-    hpLabel.innerHTML = 'HP: <span id="hud-hp">100</span>'
+    hpLabel.innerHTML = `HP: <span id="hud-hp">${maxHP}</span>`
 
     this.root.appendChild(scoreLabel)
     this.root.appendChild(hpLabel)
@@ -44,6 +52,8 @@ export class HUD {
 
     this.scoreDisplay = this.root.querySelector('#hud-score')!
     this.hpDisplay = this.root.querySelector('#hud-hp')!
+
+    this.hp = maxHP
   }
 
   setScore(value: number): void {
@@ -60,13 +70,15 @@ export class HUD {
   }
 
   setHP(value: number): void {
-    this.hp = Math.max(0, Math.min(100, value))
+    const maxHP = this.getMaxHP()
+    this.hp = Math.max(0, Math.min(maxHP, value))
     this.hpDisplay.textContent = this.hp.toString()
 
-    // Color feedback based on HP level
-    if (this.hp <= 20) {
+    // Color feedback based on HP percentage
+    const hpPercent = maxHP > 0 ? this.hp / maxHP : 0
+    if (hpPercent <= 0.2) {
       this.hpDisplay.style.color = '#ef4444' // red
-    } else if (this.hp <= 50) {
+    } else if (hpPercent <= 0.5) {
       this.hpDisplay.style.color = '#f59e0b' // orange
     } else {
       this.hpDisplay.style.color = '#10b981' // green
@@ -83,7 +95,12 @@ export class HUD {
 
   reset(): void {
     this.setScore(0)
-    this.setHP(100)
+    this.setHP(this.getMaxHP())
+  }
+
+  private getMaxHP(): number {
+    const shieldStats = this.partsManager.getCurrentStats('shield_generator')
+    return shieldStats?.maxHP ?? 100
   }
 
   dispose(): void {

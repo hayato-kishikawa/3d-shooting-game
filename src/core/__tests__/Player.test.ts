@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PerspectiveCamera, Vector3 } from 'three'
 import { Player } from '../Player'
+import { PartsManager } from '../PartsManager'
 
 type PlayerHarness = {
   player: Player
@@ -14,9 +15,13 @@ const createPlayer = (onFire = vi.fn()): PlayerHarness => {
   container.style.height = '600px'
   document.body.appendChild(container)
 
+  const partsManager = new PartsManager()
+  partsManager.reset()
+
   const player = new Player({
     camera: new PerspectiveCamera(),
     inputElement: container,
+    partsManager,
     onFire
   })
 

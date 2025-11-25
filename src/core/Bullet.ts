@@ -7,7 +7,6 @@ import {
 } from 'three'
 
 const BULLET_SPEED = 42
-const BULLET_LIFETIME = 3
 
 export class Bullet {
   readonly mesh: Mesh
@@ -24,10 +23,10 @@ export class Bullet {
     this.mesh.visible = false
   }
 
-  fire(origin: Vector3, direction: Vector3): void {
+  fire(origin: Vector3, direction: Vector3, bulletSpeed = BULLET_SPEED, range = 50): void {
     this.mesh.position.copy(origin)
-    this.velocity.copy(direction).normalize().multiplyScalar(BULLET_SPEED)
-    this.lifeRemaining = BULLET_LIFETIME
+    this.velocity.copy(direction).normalize().multiplyScalar(bulletSpeed)
+    this.lifeRemaining = range / bulletSpeed
     this.active = true
     this.mesh.visible = true
   }
@@ -66,9 +65,9 @@ export class BulletPool {
     this.bullets.forEach((bullet) => this.group.add(bullet.mesh))
   }
 
-  fire(origin: Vector3, direction: Vector3): void {
+  fire(origin: Vector3, direction: Vector3, bulletSpeed?: number, range?: number): void {
     const bullet = this.findAvailable()
-    bullet.fire(origin, direction)
+    bullet.fire(origin, direction, bulletSpeed, range)
   }
 
   update(delta: number): void {

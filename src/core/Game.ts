@@ -56,7 +56,7 @@ export class Game {
     this.bullets = new BulletPool()
     this.enemies = new EnemyManager()
     this.partsManager = new PartsManager()
-    this.hud = new HUD({ container: options.container })
+    this.hud = new HUD({ container: options.container, partsManager: this.partsManager })
     this.gameOver = new GameOver({
       container: options.container,
       onRestart: () => this.restart()
@@ -69,7 +69,8 @@ export class Game {
     this.player = new Player({
       camera: this.camera.instance,
       inputElement: options.container,
-      onFire: (origin, direction) => this.bullets.fire(origin, direction)
+      partsManager: this.partsManager,
+      onFire: (origin, direction) => this.handlePlayerFire(origin, direction)
     })
     this.initializeScene()
   }
@@ -247,5 +248,12 @@ export class Game {
 
   private handleShopClose(): void {
     // Shop closed, game resumes automatically via update() check
+  }
+
+  private handlePlayerFire(origin: Vector3, direction: Vector3): void {
+    const laserStats = this.partsManager.getCurrentStats('laser_cannon')
+    const bulletSpeed = laserStats?.bulletSpeed ?? 40
+    const range = laserStats?.range ?? 50
+    this.bullets.fire(origin, direction, bulletSpeed, range)
   }
 }

@@ -9,14 +9,15 @@ import {
   Vector2,
   Vector3
 } from 'three'
+import type { PartsManager } from './PartsManager'
 
 type PlayerOptions = {
   camera: PerspectiveCamera
   inputElement: HTMLElement
+  partsManager: PartsManager
   onFire?: (origin: Vector3, direction: Vector3) => void
 }
 
-const MOVE_SPEED = 12
 const AIM_LERP = 0.35
 const CAMERA_PLANE_OFFSET = 0.5 // matches runway height at y = -0.5
 const FIRE_INTERVAL = 0.18
@@ -32,6 +33,7 @@ export class Player {
 
   private readonly camera: PerspectiveCamera
   private readonly inputElement: HTMLElement
+  private readonly partsManager: PartsManager
   private readonly onFire?: (origin: Vector3, direction: Vector3) => void
   private readonly keys = new Set<string>()
   private readonly raycaster = new Raycaster()
@@ -61,6 +63,7 @@ export class Player {
   constructor(options: PlayerOptions) {
     this.camera = options.camera
     this.inputElement = options.inputElement
+    this.partsManager = options.partsManager
     this.onFire = options.onFire
     this.object.add(this.createHull())
     this.attachEventListeners()
@@ -132,10 +135,16 @@ export class Player {
 
     if (direction.lengthSq() > 0) {
       direction.normalize()
-      this.object.position.addScaledVector(direction, MOVE_SPEED * delta)
+      const moveSpeed = this.getMoveSpeed()
+      this.object.position.addScaledVector(direction, moveSpeed * delta)
     }
 
     this.clampPosition()
+  }
+
+  private getMoveSpeed(): number {
+    const boosterStats = this.partsManager.getCurrentStats('booster')
+    return boosterStats?.moveSpeed ?? 12
   }
 
   private updateAim(): void {
