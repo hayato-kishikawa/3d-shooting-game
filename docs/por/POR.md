@@ -6,10 +6,13 @@
 ## Deliverables (top-level)
 - Phase 1: 基盤構築 - Vite + Three.js環境、ゲームループ - ✅ 完了
 - Phase 2: 自機・敵実装 - Player.ts, Enemy.ts, Collision.ts - ✅ 完了
-- Phase 2.5: MVG完成 - HUD, Score, GameOver, Restart - 🔄 進行中（PIVOT: 成長システム前に挿入）
-- Phase 3: 成長システム - Shop.ts, Upgrade.ts, パーツバランス - PeerB lead, PeerA + Aux 企画
-- Phase 4: ボス戦 - Boss攻撃パターン、ステージクリア - PeerB lead, PeerA + Aux 企画
-- Phase 5: 仕上げ - UI/UX改善、パフォーマンス最適化 - PeerB lead, PeerA final review
+- Phase 2.5: MVG完成 - HUD, Score, GameOver, Restart - ✅ 完了 (commit:f666564)
+- Phase 3.1-3.3: 成長システム基礎 - PartsManager, Shop, 基本パーツ効果 - ✅ 完了 (commit:fe2c1ba)
+- Phase 3.4: 成長システム拡張 - 残り7パーツ実装 - ⏳ 保留 (Phase 4完了後)
+- Phase 4.1: 基本ボス - HP50, 20killトリガー, UI - ✅ 完了 (commit:0617b4f)
+- Phase 4.2: 中ボス - HP120, 50killトリガー - 🔄 次タスク
+- Phase 4.3: 最終ボス - HP250, 100killトリガー - ⏳ 待機
+- Phase 5: 仕上げ - UI/UX改善、パフォーマンス最適化 - ⏳ 待機
 
 ## Bets & Assumptions
 - 🔄 Bet 1 (VALIDATING): Three.jsで十分なパフォーマンスが出る | Probe: Phase 1でFPS計測 | Window: Phase 2開始まで
@@ -17,28 +20,31 @@
 - 🔄 Bet 3 (VALIDATING): PeerA + Aux壁打ちでバランス調整が効率化 | Probe: Phase 3でパーツ設計 | Window: Phase 4完了まで
 
 ## Roadmap (Now/Next/Later)
-- Now (Phase 2.5 - MVG): 🔄 ← 現在ここ
-  - [x] Phase 1 & 2完了（Player/Enemy/Collision/全テスト） ✓
-  - [ ] HUD.ts - スコア・HP表示（DOM overlay） ← 次
-  - [ ] Game.ts拡張 - score/hp管理、敵撃破時score++、衝突時hp--
-  - [ ] GameOver.ts - ゲームオーバー画面、リスタートボタン
-  - [ ] 敵撃破時の視覚フィードバック
-- Next (Phase 3):
-  - [ ] パーツバランス設計（PeerA + Aux壁打ち）
-  - [ ] Shop.ts - パーツショップUI
-  - [ ] Upgrade.ts - 装備・強化ロジック
-  - [ ] パーツ効果の実装
-- Later (Phase 4-5):
-  - [ ] Boss.ts - 攻撃パターン複数、弱点システム
-  - [ ] ステージクリア処理
+- Completed (Phase 1-4.1): ✅
+  - [x] Phase 1 & 2完了（Player/Enemy/Collision/全テスト）
+  - [x] Phase 2.5完了（HUD/Score/HP/GameOver/Restart） - commit:f666564
+  - [x] Phase 3.1完了（PartsManager + partsData.ts、10パーツ定義） - commit:5385729
+  - [x] Phase 3.2完了（Shop UI、Sキーでトグル） - commit:7d25d6e
+  - [x] Phase 3.3完了（基本3パーツ効果: laser_cannon, shield_generator, booster） - commit:fe2c1ba
+  - [x] Phase 4.0完了（インフラ: kill counter, BossHealthBar, StageClear, Collision.test.ts） - commits:8d9547f-6fccd50
+  - [x] Phase 4.1完了（基本ボス: HP50, 20killトリガー, 狙い撃ち, ボス弾） - commit:0617b4f, 47 tests
+- Now (Phase 4.2 - 中ボス): 🔄 ← 現在ここ
+  - [ ] Boss拡張: 中ボス "Destroyer" (HP120, 50killトリガー)
+  - [ ] 攻撃パターン強化（3-way shot等）
+  - [ ] Boss.test.ts拡張
+- Next (Phase 4.3):
+  - [ ] 最終ボス "Annihilator" (HP250, 100killトリガー)
+  - [ ] 高度な攻撃パターン（チャージ攻撃等）
+- Later (Phase 3.4, 5):
+  - [ ] 残り7パーツ実装（multi_shot, homing_missile等）
   - [ ] UI/UX改善、パフォーマンス最適化
 
 ## Decision & Pivot Log (recent 5)
-- 🔄 2025-11-26 06:38 | **PIVOT: Phase 2.5挿入** - HUD/Score/GameOver先行実装→MVG完成優先。成長システムは複雑度高。
-- ✅ 2025-11-26 06:41 | POR.md統一: 日本語版に統一、Phase 2.5 roadmap更新 (commit:81440b6)
-- ✅ 2025-11-26 06:35 | Phase 2完了: Enemy.test.ts追加、12 tests passing (commit:a9ebac3)
-- ✅ 2025-11-26 06:31 | Collision.ts実装完了: 球vs球方式採用、BulletPool/Game.ts統合完了 (commit:d8555db)
-- ✅ 2025-11-26 06:20 | PeerA介入: jsdom→happy-dom変更でテスト修正 & Enemy実装承認・コミット (commit:900e40b, 9347f86)
+- ✅ 2025-11-26 07:35 | Phase 4.1完了承認: Boss統合LGTM、47 tests passing、Phase 4.2（攻撃パターン）へ (commit:0617b4f)
+- ✅ 2025-11-26 07:20 | Phase 4.0-4.1完了: Collision.test.ts, Boss infrastructure, Boss実装完了 (commits:8d9547f-0617b4f)
+- ✅ 2025-11-26 07:05 | Phase 3.3完了: 基本3パーツ効果実装（Option A採用） (commit:fe2c1ba)
+- ✅ 2025-11-26 06:58 | Phase 3.1-3.2完了: PartsManager + Shop UI実装、24 tests passing (commit:7d25d6e)
+- ✅ 2025-11-26 06:38 | **PIVOT: Phase 2.5挿入** - HUD/Score/GameOver先行実装→MVG完成優先 (commit:81440b6)
 
 ## Risk Radar & Mitigations
 | リスク | 影響 | 確率 | 対策 |
@@ -54,9 +60,13 @@
 | 1 | 基盤構築 | PeerB | ✅ 完了 | Player移動・射撃・BulletPool実装済 (commit:c595e46) |
 | 1.5 | テスト基盤 | PeerA | ✅ 完了 | Vitest+happy-dom, 4 tests passing (commit:900e40b) |
 | 2 | 自機・敵実装 | PeerB | ✅ 完了 | Player/Enemy/Collision/全テスト完了、12 tests passing (commit:a9ebac3) |
-| 2.5 | MVG完成 | PeerB | 🔄 進行中 | POR統一完了 (commit:81440b6); 次: HUD.ts実装開始 |
-| 3 | 成長システム | PeerB | ⏳ 待機 | Phase 2.5完了後、パーツバランス設計（Aux壁打ち）から開始 |
-| 4 | ボス戦 | PeerB | ⏳ 待機 | - |
+| 2.5 | MVG完成 | PeerB | ✅ 完了 | HUD/GameOver/Restart実装完了 (commit:f666564) |
+| 3.1-3.3 | 成長システム基礎 | PeerB | ✅ 完了 | PartsManager/Shop/基本パーツ3種実装、34 tests (commit:fe2c1ba) |
+| 3.4 | 成長システム拡張 | PeerB | ⏳ 保留 | Phase 4完了後実装 |
+| 4.0 | Boss インフラ | PeerB | ✅ 完了 | Kill counter/UI/Collision tests (commits:8d9547f-6fccd50) |
+| 4.1 | 基本ボス | PeerB | ✅ 完了 | Boss実装・統合完了、47 tests passing (commit:0617b4f) |
+| 4.2 | 攻撃パターン | PeerB | 🔄 進行中 | 次: 3-way弾幕・突進攻撃追加 |
+| 4.3 | 中・最終ボス | PeerB | ⏳ 待機 | Phase 4.2完了後 |
 | 5 | 仕上げ | PeerB | ⏳ 待機 | - |
 
 ## Operating Principles
