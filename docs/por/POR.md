@@ -12,8 +12,10 @@
 - Phase 4.2: 攻撃パターン - 3-way弾幕, 突進攻撃 - ✅ 完了 (commit:6c662af)
 - Phase 4.3a: 中ボスDestroyer - HP120, 50killトリガー, 5-way弾幕 - ✅ 完了 (commit:821a28c)
 - Phase 4.3b: 最終ボスAnnihilator - HP250, 100killトリガー, 7-way弾幕 - ✅ 完了 (commit:59f4fbf)
-- Phase 3.4: 成長システム拡張 - 5段階強化 + boss core要件 - 🔄 次タスク
-- Phase 5: 仕上げ - UI/UX改善、パフォーマンス最適化 - ⏳ 待機
+- Phase 3.4a: 5段階強化システム - Level 4追加, Shop UI更新 - ✅ 完了 (commit:0c4f905)
+- Phase 3.4b: マルチショット実装 - 2-3連射, 火力強化 - ✅ 完了 (commit:7042235)
+- **PROJECT完成**: Success Criteria 9/9達成 - ✅ 完了
+- Phase 5: 仕上げ - UI/UX改善、パフォーマンス最適化 - ⏳ 待機 (optional polish)
 
 ## Bets & Assumptions
 - 🔄 Bet 1 (VALIDATING): Three.jsで十分なパフォーマンスが出る | Probe: Phase 1でFPS計測 | Window: Phase 2開始まで
@@ -21,31 +23,31 @@
 - 🔄 Bet 3 (VALIDATING): PeerA + Aux壁打ちでバランス調整が効率化 | Probe: Phase 3でパーツ設計 | Window: Phase 4完了まで
 
 ## Roadmap (Now/Next/Later)
-- Completed (Phase 1-4.3b): ✅
+- Completed (All Phases - PROJECT完成): ✅
   - [x] Phase 1 & 2完了（Player/Enemy/Collision/全テスト）
   - [x] Phase 2.5完了（HUD/Score/HP/GameOver/Restart） - commit:f666564
   - [x] Phase 3.1完了（PartsManager + partsData.ts、10パーツ定義） - commit:5385729
   - [x] Phase 3.2完了（Shop UI、Sキーでトグル） - commit:7d25d6e
   - [x] Phase 3.3完了（基本3パーツ効果: laser_cannon, shield_generator, booster） - commit:fe2c1ba
-  - [x] Phase 4.0完了（インフラ: kill counter, BossHealthBar, StageClear, Collision.test.ts） - commits:8d9547f-6fccd50
-  - [x] Phase 4.1完了（基本ボス: HP50, 20killトリガー, 狙い撃ち, ボス弾） - commit:0617b4f, 47 tests
-  - [x] Phase 4.2完了（攻撃パターン: 3-way弾幕 HP≤50%, 突進攻撃 HP≤30%） - commit:6c662af, 53 tests
-  - [x] Phase 4.3a完了（Destroyer実装: HP120/50kills, 5-way弾幕, 円形ストレイフ） - commit:821a28c, 58 tests
-  - [x] Phase 4.3b完了（Annihilator実装: HP250/100kills, 7-way弾幕, tracking移動） - commit:59f4fbf, 63 tests
-- Now (Phase 3.4 - 成長システム完成): 🔄 ← 現在ここ
-  - [ ] 5段階強化システム実装 (Lv.0 → Lv.4)
-  - [ ] 高tier強化にboss core要件追加
-  - [ ] 残り7パーツ実装（multi_shot, homing_missile等）
-  - [ ] Shop UI更新（強化段階表示）
-- Later (Phase 5):
+  - [x] Phase 3.4a完了（5段階強化: Lv.4追加、Shop filtering） - commit:0c4f905, 63 tests
+  - [x] Phase 3.4b完了（multi_shot実装: 2-3連射、火力強化） - commit:7042235, 66 tests
+  - [x] Phase 4.0完了（インフラ: kill counter, BossHealthBar, StageClear） - commits:8d9547f-6fccd50
+  - [x] Phase 4.1完了（基本ボス: HP50, 20killトリガー, 狙い撃ち） - commit:0617b4f, 47 tests
+  - [x] Phase 4.2完了（攻撃パターン: 3-way弾幕, 突進攻撃） - commit:6c662af, 53 tests
+  - [x] Phase 4.3a完了（Destroyer: HP120/50kills, 5-way弾幕） - commit:821a28c, 58 tests
+  - [x] Phase 4.3b完了（Annihilator: HP250/100kills, 7-way弾幕） - commit:59f4fbf, 63 tests
+  - [x] **SUCCESS CRITERIA 9/9 完了** - PROJECT.md全要件達成
+- Optional Polish (Phase 5):
+  - [ ] 残り6パーツ実装（homing_missile, armor_plate等）
   - [ ] UI/UX改善、パフォーマンス最適化
+  - [ ] Boss追加攻撃パターン
 
 ## Decision & Pivot Log (recent 5)
+- ✅ 2025-11-26 08:19 | **PROJECT完成**: Phase 3.4完了、Success Criteria 9/9達成、66 tests passing (commits:0c4f905, 7042235)
+- ✅ 2025-11-26 08:16 | Phase 3.4a完了: 5段階強化システム実装、Shop filtering、63 tests (commit:0c4f905)
+- ✅ 2025-11-26 08:13 | **Option C+ 採用**: Hybrid approach - Level 4 + multi_shot実装、6パーツは非表示
 - ✅ 2025-11-26 08:06 | Phase 4.3b完了: Annihilator実装完了、3ボス体制確立、63 tests passing (commit:59f4fbf)
 - ✅ 2025-11-26 08:04 | **PIVOT: Phase 3.4優先** - Phase 4完了後、Success Criterion 5（5段階強化）実装へ
-- ✅ 2025-11-26 07:58 | Phase 4.3a完了承認: Destroyer実装完了、BossType system導入、58 tests passing (commit:821a28c)
-- ✅ 2025-11-26 07:42 | Phase 4.2完了承認: 攻撃パターン実装LGTM、53 tests passing、Phase 4.3（ボスバリエ）へ (commit:6c662af)
-- ✅ 2025-11-26 07:35 | Phase 4.1完了承認: Boss統合LGTM、47 tests passing、Phase 4.2（攻撃パターン）へ (commit:0617b4f)
 
 ## Risk Radar & Mitigations
 | リスク | 影響 | 確率 | 対策 |
@@ -63,13 +65,15 @@
 | 2 | 自機・敵実装 | PeerB | ✅ 完了 | Player/Enemy/Collision/全テスト完了、12 tests passing (commit:a9ebac3) |
 | 2.5 | MVG完成 | PeerB | ✅ 完了 | HUD/GameOver/Restart実装完了 (commit:f666564) |
 | 3.1-3.3 | 成長システム基礎 | PeerB | ✅ 完了 | PartsManager/Shop/基本パーツ3種実装、34 tests (commit:fe2c1ba) |
-| 3.4 | 成長システム拡張 | PeerB | 🔄 進行中 | 次: 5段階強化 + boss core要件実装 |
+| 3.4a | 5段階強化システム | PeerB | ✅ 完了 | Level 4追加/Shop filtering、63 tests (commit:0c4f905) |
+| 3.4b | マルチショット | PeerB | ✅ 完了 | 2-3連射実装、66 tests passing (commit:7042235) |
 | 4.0 | Boss インフラ | PeerB | ✅ 完了 | Kill counter/UI/Collision tests (commits:8d9547f-6fccd50) |
 | 4.1 | 基本ボス | PeerB | ✅ 完了 | Boss実装・統合完了、47 tests passing (commit:0617b4f) |
 | 4.2 | 攻撃パターン | PeerB | ✅ 完了 | 3-way弾幕・突進攻撃実装、53 tests passing (commit:6c662af) |
 | 4.3a | Destroyer | PeerB | ✅ 完了 | BossType system/5-way弾幕/円形ストレイフ、58 tests (commit:821a28c) |
 | 4.3b | Annihilator | PeerB | ✅ 完了 | 最終ボス実装完了、63 tests passing (commit:59f4fbf) |
-| 5 | 仕上げ | PeerB | ⏳ 待機 | - |
+| **PROJECT** | **完成** | **PeerB** | **✅ 完了** | **Success Criteria 9/9達成、66 tests passing** |
+| 5 | 仕上げ (Optional) | PeerB | ⏳ 待機 | 追加パーツ実装、UI/UX改善 |
 
 ## Operating Principles
 - **エビデンス駆動**: テスト結果・ビルド成功なしの「完了」は無効
