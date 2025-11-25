@@ -58,6 +58,7 @@ export class Game {
   private elapsed = 0
   private isGameOver = false
   private bossActive = false
+  private currentBossType: BossType | null = null
 
   private readonly cameraTarget = new Vector3()
   private readonly cameraOffset = new Vector3(0, 20, 15)
@@ -184,7 +185,9 @@ export class Game {
     // Boss spawn check
     const killCount = this.enemies.getKillCount()
     if (!this.bossActive && !this.boss.isActive()) {
-      if (killCount >= 50) {
+      if (killCount >= 100) {
+        this.spawnBoss('annihilator')
+      } else if (killCount >= 50) {
         this.spawnBoss('destroyer')
       } else if (killCount >= 20) {
         this.spawnBoss('dreadnought')
@@ -233,6 +236,7 @@ export class Game {
   private restart(): void {
     this.isGameOver = false
     this.bossActive = false
+    this.currentBossType = null
     this.hud.reset()
     this.player.object.position.set(0, 0, 0)
 
@@ -249,6 +253,7 @@ export class Game {
 
   private spawnBoss(type: BossType): void {
     this.bossActive = true
+    this.currentBossType = type
     this.enemies.setSpawningEnabled(false)
 
     const bossPosition = new Vector3(0, 0, -20)
@@ -271,14 +276,23 @@ export class Game {
     this.bossHealthBar.hide()
     this.enemies.setSpawningEnabled(true)
 
-    // Award boss core and score
-    this.partsManager.addBossCore(1)
+    // Award boss cores based on type
+    const bossCoreDrops: Record<BossType, number> = {
+      dreadnought: 1,
+      destroyer: 1,
+      annihilator: 3
+    }
+    const coreCount = this.currentBossType ? bossCoreDrops[this.currentBossType] : 1
+    this.partsManager.addBossCore(coreCount)
+
     const bossScore = 100
     this.hud.addScore(bossScore)
     this.partsManager.addScore(bossScore)
 
     // Show stage clear
     this.stageClear.show(this.hud.getScore(), 1)
+
+    this.currentBossType = null
   }
 
   private scrollFloor(delta: number): void {

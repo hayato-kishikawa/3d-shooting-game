@@ -332,5 +332,75 @@ describe('Boss', () => {
         expect(Math.abs(boss.position.z - initialZ)).toBeLessThan(3)
       })
     })
+
+    describe('Annihilator (final boss)', () => {
+      it('spawns with HP 250', () => {
+        const position = new Vector3(0, 0, -20)
+
+        boss.spawn(position, 'annihilator')
+
+        expect(boss.isActive()).toBe(true)
+        expect(boss.currentHP).toBe(250)
+        expect(boss.maxHitPoints).toBe(250)
+      })
+
+      it('fires single bullet when HP > 50%', () => {
+        const onFire = vi.fn()
+        boss.spawn(new Vector3(0, 0, -20), 'annihilator', onFire)
+
+        const playerPosition = new Vector3(2, 0, 5)
+        boss.update(1.5, playerPosition)
+
+        // Only 1 call (center bullet)
+        expect(onFire).toHaveBeenCalledTimes(1)
+      })
+
+      it('fires 7-way spread when HP ≤ 50%', () => {
+        const onFire = vi.fn()
+        boss.spawn(new Vector3(0, 0, -20), 'annihilator', onFire)
+
+        // Reduce HP to 50% (Annihilator HP is 250, so reduce to 125)
+        boss.takeDamage(125)
+        expect(boss.currentHP).toBe(125)
+
+        const playerPosition = new Vector3(2, 0, 5)
+        boss.update(1.5, playerPosition)
+
+        // 7 calls (7-way spread)
+        expect(onFire).toHaveBeenCalledTimes(7)
+      })
+
+      it('performs tracking movement', () => {
+        boss.spawn(new Vector3(0, 0, -20), 'annihilator')
+
+        const initialX = boss.position.x
+
+        // Update over time to see tracking with sway overlay
+        boss.update(0.5)
+
+        // Position should change due to sway component
+        expect(boss.position.x).not.toBe(initialX)
+      })
+
+      it('rushes toward player when HP ≤ 50%', () => {
+        boss.spawn(new Vector3(0, 0, -20), 'annihilator')
+
+        // Reduce HP to 50% (Annihilator HP is 250, so reduce to 125)
+        boss.takeDamage(125)
+        expect(boss.currentHP).toBe(125)
+
+        const playerPosition = new Vector3(0, 0, 10)
+        const initialZ = boss.position.z
+
+        // Wait for rush cooldown to expire and rush to start
+        boss.update(10.5, playerPosition)
+
+        // Update a bit more to let boss move during rush
+        boss.update(0.5, playerPosition)
+
+        // Boss should move toward player (Z increases from initial)
+        expect(boss.position.z).toBeGreaterThan(initialZ)
+      })
+    })
   })
 })
