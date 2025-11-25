@@ -17,11 +17,20 @@ import { GameCamera } from '../graphics/Camera'
 import { Player } from './Player'
 import { BulletPool } from './Bullet'
 import { EnemyManager } from './Enemy'
-import { checkBulletEnemyCollisions, checkPlayerEnemyCollision } from './Collision'
+import {
+  checkBulletEnemyCollisions,
+  checkPlayerEnemyCollision,
+  checkBulletBossCollisions,
+  checkBossBulletPlayerCollision
+} from './Collision'
 import { HUD } from '../ui/HUD'
 import { GameOver } from '../ui/GameOver'
 import { Shop } from '../ui/Shop'
+import { BossHealthBar } from '../ui/BossHealthBar'
+import { StageClear } from '../ui/StageClear'
 import { PartsManager } from './PartsManager'
+import { Boss } from './Boss'
+import { BossBulletPool } from './BossBullet'
 
 type GameOptions = {
   container: HTMLElement
@@ -34,6 +43,10 @@ export class Game {
   private readonly player: Player
   private readonly bullets: BulletPool
   private readonly enemies: EnemyManager
+  private readonly boss: Boss
+  private readonly bossBullets: BossBulletPool
+  private readonly bossHealthBar: BossHealthBar
+  private readonly stageClear: StageClear
   private readonly hud: HUD
   private readonly gameOver: GameOver
   private readonly shop: Shop
@@ -44,6 +57,7 @@ export class Game {
   private animationFrameId: number | null = null
   private elapsed = 0
   private isGameOver = false
+  private bossActive = false
 
   private readonly cameraTarget = new Vector3()
   private readonly cameraOffset = new Vector3(0, 20, 15)
@@ -55,6 +69,8 @@ export class Game {
     this.camera = new GameCamera()
     this.bullets = new BulletPool()
     this.enemies = new EnemyManager()
+    this.bossBullets = new BossBulletPool()
+    this.boss = new Boss()
     this.partsManager = new PartsManager()
     this.hud = new HUD({ container: options.container, partsManager: this.partsManager })
     this.gameOver = new GameOver({
@@ -65,6 +81,11 @@ export class Game {
       container: options.container,
       partsManager: this.partsManager,
       onClose: () => this.handleShopClose()
+    })
+    this.bossHealthBar = new BossHealthBar({ container: options.container })
+    this.stageClear = new StageClear({
+      container: options.container,
+      onRestart: () => this.restart()
     })
     this.player = new Player({
       camera: this.camera.instance,
@@ -93,9 +114,13 @@ export class Game {
     this.player.dispose()
     this.bullets.dispose()
     this.enemies.dispose()
+    this.boss.dispose()
+    this.bossBullets.dispose()
     this.hud.dispose()
     this.gameOver.dispose()
     this.shop.dispose()
+    this.bossHealthBar.dispose()
+    this.stageClear.dispose()
     this.partsManager.dispose()
     window.removeEventListener('resize', this.resizeHandler)
     window.removeEventListener('keydown', this.shopKeyHandler)
@@ -156,6 +181,43 @@ export class Game {
       }
     }
 
+    // Boss spawn check
+    const killCount = this.enemies.getKillCount()
+    if (!this.bossActive && !this.boss.isActive() && killCount >= 20) {
+      this.spawnBoss()
+    }
+
+    // Boss update and collision
+    if (this.boss.isActive()) {
+      this.boss.update(delta, this.player.position)
+      this.bossBullets.update(delta)
+      this.bossHealthBar.update(this.boss.currentHP)
+
+      // Player bullets vs boss
+      const bossHits = checkBulletBossCollisions(this.bullets.getActiveBullets(), this.boss)
+      bossHits.forEach((bullet) => {
+        bullet.deactivate()
+        const defeated = this.boss.takeDamage(10)
+        if (defeated) {
+          this.handleBossDefeat()
+        }
+      })
+
+      // Boss bullets vs player
+      const bossBulletHit = checkBossBulletPlayerCollision(
+        this.bossBullets.getActiveBullets(),
+        this.player
+      )
+      if (bossBulletHit) {
+        bossBulletHit.deactivate()
+        const damage = bossBulletHit.getDamage()
+        this.hud.addHP(-damage)
+        if (this.hud.getHP() <= 0) {
+          this.triggerGameOver()
+        }
+      }
+    }
+
     this.scrollFloor(delta)
   }
 
@@ -166,12 +228,48 @@ export class Game {
 
   private restart(): void {
     this.isGameOver = false
+    this.bossActive = false
     this.hud.reset()
     this.player.object.position.set(0, 0, 0)
 
     // Deactivate all active bullets and enemies
     this.bullets.getActiveBullets().forEach((bullet) => bullet.deactivate())
     this.enemies.getActiveEnemies().forEach((enemy) => enemy.deactivate())
+    this.bossBullets.getActiveBullets().forEach((bullet) => bullet.deactivate())
+    if (this.boss.isActive()) {
+      this.boss.deactivate()
+    }
+    this.bossHealthBar.hide()
+    this.enemies.setSpawningEnabled(true)
+  }
+
+  private spawnBoss(): void {
+    this.bossActive = true
+    this.enemies.setSpawningEnabled(false)
+
+    const bossPosition = new Vector3(0, 0, -20)
+    const bossHP = 50
+
+    this.boss.spawn(bossPosition, bossHP, (origin, direction) => {
+      this.bossBullets.fire(origin, direction)
+    })
+
+    this.bossHealthBar.show(bossHP, 'BOSS')
+  }
+
+  private handleBossDefeat(): void {
+    this.bossActive = false
+    this.bossHealthBar.hide()
+    this.enemies.setSpawningEnabled(true)
+
+    // Award boss core and score
+    this.partsManager.addBossCore(1)
+    const bossScore = 100
+    this.hud.addScore(bossScore)
+    this.partsManager.addScore(bossScore)
+
+    // Show stage clear
+    this.stageClear.show(this.hud.getScore(), 1)
   }
 
   private scrollFloor(delta: number): void {
@@ -202,6 +300,8 @@ export class Game {
     this.scene.add(this.player.object)
     this.scene.add(this.bullets.group)
     this.scene.add(this.enemies.group)
+    this.scene.add(this.boss.object)
+    this.scene.add(this.bossBullets.group)
 
     const runwaySegments = this.createRunwaySegments()
     runwaySegments.forEach((segment) => this.scene.add(segment))

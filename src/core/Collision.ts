@@ -2,10 +2,13 @@ import { Vector3 } from 'three'
 import type { Bullet } from './Bullet'
 import type { Enemy } from './Enemy'
 import type { Player } from './Player'
+import type { Boss } from './Boss'
+import type { BossBullet } from './BossBullet'
 
 const BULLET_RADIUS = 0.15
 const ENEMY_RADIUS = 1.0
 const PLAYER_RADIUS = 1.0
+const BOSS_RADIUS = 3.0
 
 export interface BulletHit {
   bullet: Bullet
@@ -73,6 +76,54 @@ export function checkPlayerEnemyCollision(
 
     if (sphereIntersects(player.position, PLAYER_RADIUS, enemy.position, ENEMY_RADIUS)) {
       return enemy
+    }
+  }
+
+  return null
+}
+
+/**
+ * Check if player bullets collide with boss
+ * Returns array of bullets that hit the boss
+ */
+export function checkBulletBossCollisions(
+  bullets: readonly Bullet[],
+  boss: Boss
+): Bullet[] {
+  if (!boss.isActive()) {
+    return []
+  }
+
+  const hits: Bullet[] = []
+
+  for (const bullet of bullets) {
+    if (!bullet.isActive()) {
+      continue
+    }
+
+    if (sphereIntersects(bullet.mesh.position, BULLET_RADIUS, boss.position, BOSS_RADIUS)) {
+      hits.push(bullet)
+    }
+  }
+
+  return hits
+}
+
+/**
+ * Check if boss bullets collide with player
+ * Returns the first boss bullet that collides, or null if none
+ */
+export function checkBossBulletPlayerCollision(
+  bossBullets: readonly BossBullet[],
+  player: Player
+): BossBullet | null {
+  for (const bullet of bossBullets) {
+    if (!bullet.isActive()) {
+      continue
+    }
+
+    if (sphereIntersects(bullet.mesh.position, BULLET_RADIUS, player.position, PLAYER_RADIUS)) {
+      return bullet
     }
   }
 
