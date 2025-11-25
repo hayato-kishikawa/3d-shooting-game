@@ -75,6 +75,10 @@ export class BulletPool {
     this.bullets.forEach((bullet) => bullet.update(delta))
   }
 
+  getActiveBullets(): readonly Bullet[] {
+    return this.bullets.filter((bullet) => bullet.isActive())
+  }
+
   dispose(): void {
     this.bullets.forEach((bullet) => {
       bullet.deactivate()

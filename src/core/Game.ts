@@ -17,6 +17,7 @@ import { GameCamera } from '../graphics/Camera'
 import { Player } from './Player'
 import { BulletPool } from './Bullet'
 import { EnemyManager } from './Enemy'
+import { checkBulletEnemyCollisions, checkPlayerEnemyCollision } from './Collision'
 
 type GameOptions = {
   container: HTMLElement
@@ -99,6 +100,23 @@ export class Game {
 
     this.bullets.update(delta)
     this.enemies.update(delta)
+
+    // Collision detection
+    const bulletHits = checkBulletEnemyCollisions(
+      this.bullets.getActiveBullets(),
+      this.enemies.getActiveEnemies()
+    )
+    bulletHits.forEach((hit) => {
+      hit.bullet.deactivate()
+      hit.enemy.deactivate()
+    })
+
+    const playerHit = checkPlayerEnemyCollision(this.player, this.enemies.getActiveEnemies())
+    if (playerHit) {
+      // TODO: Implement game over / damage system
+      // For now, enemies that hit the player are deactivated
+    }
+
     this.scrollFloor(delta)
   }
 
