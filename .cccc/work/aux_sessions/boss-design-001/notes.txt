@@ -1,0 +1,41 @@
+AUX Session: Boss Battle System Design
+Session Type: planning
+Date: 2025-11-26
+
+Context:
+- MVG (Phase 2.5) completed: Player controls, Enemy spawning, Collision detection, HUD, GameOver
+- Growth system (Phase 3) planned: Level 3 upgrades require Boss Cores
+- Current enemy specs: HP 1, straight + sway movement, 10 damage on collision
+
+Task:
+Create comprehensive boss battle system design document with:
+1. Boss specifications (HP, movement, appearance)
+2. Attack patterns (3-5 types per boss)
+3. Weakness system (optional)
+4. Boss battle flow
+5. Implementation priority (Phase 4.1-4.3)
+6. Game balance analysis
+
+Inputs reviewed:
+- /Users/haya/副業/shooting2/3d-shooting-game/docs/por/POR.md
+- /Users/haya/副業/shooting2/3d-shooting-game/src/core/Enemy.ts
+- /Users/haya/副業/shooting2/3d-shooting-game/src/core/Player.ts
+- /Users/haya/副業/shooting2/3d-shooting-game/src/data/partsData.ts
+- /Users/haya/副業/shooting2/3d-shooting-game/src/core/Game.ts
+
+Output:
+- boss-system-design.md (comprehensive design document in Japanese)
+
+Key Decisions:
+1. Three boss types: Early (HP 50), Mid (HP 120), Final (HP 250)
+2. Boss Core rewards: 1, 2, 3 respectively
+3. Spawn triggers: 20, 50, 100 enemy kills
+4. Attack patterns: 3, 4, 5 types respectively
+5. Weakness system deferred to Phase 4.3 (optional)
+6. Progressive difficulty: Lv.0 can beat first boss, Lv.1-2 for mid boss, Lv.3 for final boss
+7. Implementation phases: 4.1 (minimal boss), 4.2 (attack patterns), 4.3 (all bosses + advanced systems)
+
+Next Steps:
+- PeerB to review design document before Phase 4.1 implementation
+- Update POR.md to mark "Boss attack pattern design" delegation as complete
+- Begin Phase 4.1 implementation after Phase 3 completion
