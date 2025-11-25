@@ -141,6 +141,7 @@ export class Game {
     bulletHits.forEach((hit) => {
       hit.bullet.deactivate()
       hit.enemy.deactivate()
+      this.enemies.incrementKillCount()
       const scoreGained = 10
       this.hud.addScore(scoreGained)
       this.partsManager.addScore(scoreGained)

@@ -132,6 +132,8 @@ export class EnemyManager {
   private readonly enemies: Enemy[]
   private spawnTimer = 0
   private readonly spawnPosition = new Vector3()
+  private killCount = 0
+  private spawningEnabled = true
 
   constructor(capacity = ENEMY_CAPACITY) {
     this.enemies = Array.from({ length: capacity }, () => new Enemy())
@@ -157,12 +159,24 @@ export class EnemyManager {
     return this.enemies.filter((enemy) => enemy.isActive())
   }
 
+  getKillCount(): number {
+    return this.killCount
+  }
+
+  incrementKillCount(): void {
+    this.killCount += 1
+  }
+
+  setSpawningEnabled(enabled: boolean): void {
+    this.spawningEnabled = enabled
+  }
+
   dispose(): void {
     this.enemies.forEach((enemy) => enemy.dispose())
   }
 
   private trySpawn(): void {
-    if (this.countActive() >= MAX_ACTIVE_ENEMIES) {
+    if (!this.spawningEnabled || this.countActive() >= MAX_ACTIVE_ENEMIES) {
       this.resetSpawnTimer()
       return
     }
