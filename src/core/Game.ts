@@ -15,6 +15,7 @@ import {
 import { Renderer } from '../graphics/Renderer'
 import { GameCamera } from '../graphics/Camera'
 import { Player } from './Player'
+import { BulletPool } from './Bullet'
 
 type GameOptions = {
   container: HTMLElement
@@ -25,6 +26,7 @@ export class Game {
   private readonly renderer: Renderer
   private readonly camera: GameCamera
   private readonly player: Player
+  private readonly bullets: BulletPool
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
   private animationFrameId: number | null = null
@@ -33,11 +35,17 @@ export class Game {
   private readonly cameraTarget = new Vector3()
   private readonly cameraOffset = new Vector3(0, 20, 15)
   private readonly desiredCameraPosition = new Vector3()
+  private readonly scrollables: Object3D[] = []
 
   constructor(options: GameOptions) {
     this.renderer = new Renderer(options.container)
     this.camera = new GameCamera()
-    this.player = new Player({ camera: this.camera.instance, inputElement: options.container })
+    this.bullets = new BulletPool()
+    this.player = new Player({
+      camera: this.camera.instance,
+      inputElement: options.container,
+      onFire: (origin, direction) => this.bullets.fire(origin, direction)
+    })
     this.initializeScene()
   }
 
@@ -56,6 +64,7 @@ export class Game {
     this.stop()
     this.renderer.dispose()
     this.player.dispose()
+    this.bullets.dispose()
     window.removeEventListener('resize', this.resizeHandler)
   }
 
@@ -84,17 +93,16 @@ export class Game {
     this.desiredCameraPosition.copy(this.player.position).add(this.cameraOffset)
     this.camera.moveTowards(this.desiredCameraPosition, 0.08)
 
+    this.bullets.update(delta)
     this.scrollFloor(delta)
   }
 
   private scrollFloor(delta: number): void {
     const speed = 6
-    this.scene.traverse((object: Object3D) => {
-      if (object.userData.scrollable === true) {
-        object.position.z += delta * speed
-        if (object.position.z > 6) {
-          object.position.z -= 12
-        }
+    this.scrollables.forEach((object) => {
+      object.position.z += delta * speed
+      if (object.position.z > 6) {
+        object.position.z -= 12
       }
     })
   }
@@ -115,6 +123,7 @@ export class Game {
     directional.position.set(4, 8, 6)
 
     this.scene.add(this.player.object)
+    this.scene.add(this.bullets.group)
 
     const runwaySegments = this.createRunwaySegments()
     runwaySegments.forEach((segment) => this.scene.add(segment))
@@ -142,8 +151,8 @@ export class Game {
 
       segment.add(plane, strip)
       segment.position.z = -i * 12
-      segment.userData.scrollable = true
       segments.push(segment)
+      this.scrollables.push(segment)
     }
     return segments
   }
