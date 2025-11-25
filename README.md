@@ -11,27 +11,51 @@ A 3D shooting game built with Three.js and TypeScript featuring upgradeable part
 - 4 functional parts: Laser Cannon, Multi-Shot, Shield Generator, Booster
 - Parts shop system
 
+## Prerequisites
+
+- **Node.js 20.19+ or 22+** (required by Vite 7.2)
+
+### Installing Node.js
+
+**Using nvm (recommended):**
+```bash
+# Install nvm if you haven't already
+# See: https://github.com/nvm-sh/nvm
+
+# Install Node.js 22
+nvm install 22
+nvm use 22
+nvm alias default 22
+```
+
+**Direct installation:**
+Download from [nodejs.org](https://nodejs.org/) and install Node.js 22 LTS.
+
+**Verify installation:**
+```bash
+node --version  # Should show v22.x.x
+```
+
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 18+ required
-
-### Installation & Running Locally
-
+### 1. Clone the repository
 ```bash
-# Clone the repository
 git clone https://github.com/hayato-kishikawa/3d-shooting-game.git
 cd 3d-shooting-game
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Open browser at http://localhost:5173
 ```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Run development server
+```bash
+npm run dev
+```
+
+### 4. Open in browser
+Navigate to [http://localhost:5173](http://localhost:5173)
 
 ### Build for Production
 
@@ -74,6 +98,25 @@ src/
 
 - 66 tests passing (100%)
 - Coverage: Player, Boss, Enemy, Collision, PartsManager
+
+## Troubleshooting
+
+### "Vite requires Node.js version 20.19+ or 22.12+" error
+
+If you see this error when running `npm run dev`:
+```
+You are using Node.js X.X.X.
+Vite requires Node.js version 20.19+ or 22.12+.
+```
+
+**Solution:** Your Node.js version is too old. Please upgrade to Node.js 22 using the installation instructions in the [Prerequisites](#prerequisites) section above.
+
+**Quick fix with nvm:**
+```bash
+nvm install 22
+nvm use 22
+npm run dev
+```
 
 ## License
 
