@@ -20,7 +20,6 @@ type PlayerOptions = {
 
 const AIM_LERP = 0.35
 const CAMERA_PLANE_OFFSET = 0.5 // matches runway height at y = -0.5
-const FIRE_INTERVAL = 0.18
 const PLAY_AREA = {
   minX: -7,
   maxX: 7,
@@ -147,6 +146,11 @@ export class Player {
     return boosterStats?.moveSpeed ?? 12
   }
 
+  private getFireInterval(): number {
+    const multiStats = this.partsManager.getCurrentStats('multi_shot')
+    return multiStats?.fireInterval ?? 0.18
+  }
+
   private updateAim(): void {
     this.raycaster.setFromCamera(this.mouseNDC, this.camera)
     const hitPoint = this.raycaster.ray.intersectPlane(this.groundPlane, this.tmp)
@@ -169,7 +173,7 @@ export class Player {
     }
 
     this.fire()
-    this.fireCooldown = FIRE_INTERVAL
+    this.fireCooldown = this.getFireInterval()
     this.fireRequest = this.pointerFiring || this.spaceFiring
   }
 
@@ -177,6 +181,10 @@ export class Player {
     if (!this.onFire) {
       return
     }
+
+    const multiStats = this.partsManager.getCurrentStats('multi_shot')
+    const bulletCount = multiStats?.bulletCount ?? 1
+    const spreadAngle = multiStats?.spreadAngle ?? 0
 
     const direction = this.fireDirection.copy(this.aimPoint).sub(this.object.position)
     direction.y = 0
@@ -189,7 +197,27 @@ export class Player {
     origin.y += 0.15
     origin.addScaledVector(direction, 0.9)
 
-    this.onFire(origin.clone(), direction.clone())
+    if (bulletCount === 1) {
+      // Single bullet
+      this.onFire(origin.clone(), direction.clone())
+    } else {
+      // Multi-shot spread
+      const spreadRad = (spreadAngle * Math.PI) / 180
+      const angleStep = (spreadRad * 2) / (bulletCount - 1)
+      const startAngle = -spreadRad
+
+      for (let i = 0; i < bulletCount; i++) {
+        const angle = startAngle + angleStep * i
+        const spreadDir = direction.clone()
+        const cos = Math.cos(angle)
+        const sin = Math.sin(angle)
+        const x = spreadDir.x * cos - spreadDir.z * sin
+        const z = spreadDir.x * sin + spreadDir.z * cos
+        spreadDir.set(x, spreadDir.y, z).normalize()
+
+        this.onFire(origin.clone(), spreadDir)
+      }
+    }
   }
 
   private queueFire(): void {

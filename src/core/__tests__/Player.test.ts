@@ -69,4 +69,109 @@ describe('Player', () => {
 
     harness.dispose()
   })
+
+  describe('multi-shot weapon system', () => {
+    it('fires 2 bullets with spread at multi_shot level 3', () => {
+      const onFire = vi.fn()
+      const harness = createPlayer(onFire)
+      const { player } = harness
+
+      // @ts-expect-error accessing private member for test
+      const partsManager = player.partsManager
+      // Upgrade multi_shot to level 3 (2-bullet spread)
+      partsManager.addScore(1000)
+      partsManager.upgrade('multi_shot') // Lv0 → Lv1
+      partsManager.upgrade('multi_shot') // Lv1 → Lv2
+      partsManager.upgrade('multi_shot') // Lv2 → Lv3
+      partsManager.addBossCore(1)
+      partsManager.upgrade('multi_shot') // Lv3 (requires 1 boss core)
+
+      player.object.position.set(0, 0, 0)
+      // @ts-expect-error private member access for deterministic aim
+      player.aimPoint.copy(new Vector3(0, 0, 4))
+      // @ts-expect-error calling private fire
+      player.fire()
+
+      // Should fire 2 bullets
+      expect(onFire).toHaveBeenCalledTimes(2)
+
+      // Verify spread angles
+      const [, dir1] = onFire.mock.calls[0]
+      const [, dir2] = onFire.mock.calls[1]
+
+      // Both should be normalized
+      expect(dir1.length()).toBeCloseTo(1, 5)
+      expect(dir2.length()).toBeCloseTo(1, 5)
+
+      // Should have different X components (spread)
+      expect(Math.abs(dir1.x - dir2.x)).toBeGreaterThan(0.1)
+
+      harness.dispose()
+    })
+
+    it('fires 3 bullets with spread at multi_shot level 4', () => {
+      const onFire = vi.fn()
+      const harness = createPlayer(onFire)
+      const { player } = harness
+
+      // @ts-expect-error accessing private member for test
+      const partsManager = player.partsManager
+      // Upgrade multi_shot to level 4 (3-bullet spread)
+      partsManager.addScore(3000)
+      partsManager.addBossCore(10)
+      partsManager.upgrade('multi_shot') // Lv0 → Lv1
+      partsManager.upgrade('multi_shot') // Lv1 → Lv2
+      partsManager.upgrade('multi_shot') // Lv2 → Lv3
+      partsManager.upgrade('multi_shot') // Lv3 → Lv4
+
+      player.object.position.set(0, 0, 0)
+      // @ts-expect-error private member access for deterministic aim
+      player.aimPoint.copy(new Vector3(0, 0, 4))
+      // @ts-expect-error calling private fire
+      player.fire()
+
+      // Should fire 3 bullets
+      expect(onFire).toHaveBeenCalledTimes(3)
+
+      // Verify all bullets are normalized
+      for (let i = 0; i < 3; i++) {
+        const [, dir] = onFire.mock.calls[i]
+        expect(dir.length()).toBeCloseTo(1, 5)
+      }
+
+      harness.dispose()
+    })
+
+    it('reduces fire interval with multi_shot upgrades', () => {
+      const onFire = vi.fn()
+      const harness = createPlayer(onFire)
+      const { player } = harness
+
+      // @ts-expect-error accessing private member for test
+      const partsManager = player.partsManager
+
+      // Initial fire interval (level 0)
+      // @ts-expect-error calling private getFireInterval
+      const initialInterval = player.getFireInterval()
+      expect(initialInterval).toBe(0.18)
+
+      // Upgrade to level 1 (faster fire rate)
+      partsManager.addScore(500)
+      partsManager.upgrade('multi_shot') // Lv0 → Lv1
+
+      // @ts-expect-error calling private getFireInterval
+      const level1Interval = player.getFireInterval()
+      expect(level1Interval).toBe(0.144) // -20% from data
+
+      // Upgrade to level 2 (even faster)
+      partsManager.addScore(500)
+      partsManager.upgrade('multi_shot') // Lv1 → Lv2
+
+      // @ts-expect-error calling private getFireInterval
+      const level2Interval = player.getFireInterval()
+      expect(level2Interval).toBe(0.117) // -35% from data
+
+      harness.dispose()
+    })
+  })
 })
