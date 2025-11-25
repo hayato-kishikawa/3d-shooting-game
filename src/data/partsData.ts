@@ -36,6 +36,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { damage: 2, range: 80, bulletSpeed: 60 },
         description: 'ダメージ2倍、射程距離+60%、弾速+50%'
+      },
+      {
+        level: 4,
+        price: 500,
+        bossCoreCost: 3,
+        stats: { damage: 2, range: 90, bulletSpeed: 70 },
+        description: '射程距離+80%、弾速+75%'
       }
     ]
   },
@@ -73,6 +80,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { fireInterval: 0.144, bulletCount: 2, spreadAngle: 15 },
         description: '2連射、左右から発射'
+      },
+      {
+        level: 4,
+        price: 700,
+        bossCoreCost: 3,
+        stats: { fireInterval: 0.12, bulletCount: 3, spreadAngle: 20 },
+        description: '3連射、連射速度-33%'
       }
     ]
   },
@@ -110,6 +124,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 2,
         stats: { turnRate: 5.0, fireInterval: 1.2, damage: 2, lockRange: 50 },
         description: 'ホーミング高精度、ダメージ2倍'
+      },
+      {
+        level: 4,
+        price: 1000,
+        bossCoreCost: 3,
+        stats: { turnRate: 7.0, fireInterval: 1.0, damage: 3, lockRange: 60 },
+        description: 'ホーミング最高精度、ダメージ3倍、1秒間隔'
       }
     ]
   },
@@ -148,6 +169,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { maxHP: 200 },
         description: 'HP+100'
+      },
+      {
+        level: 4,
+        price: 560,
+        bossCoreCost: 3,
+        stats: { maxHP: 250 },
+        description: 'HP+150'
       }
     ]
   },
@@ -185,6 +213,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { damageReduction: 0.5 },
         description: 'ダメージ軽減50%'
+      },
+      {
+        level: 4,
+        price: 640,
+        bossCoreCost: 3,
+        stats: { damageReduction: 0.65 },
+        description: 'ダメージ軽減65%'
       }
     ]
   },
@@ -222,6 +257,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 2,
         stats: { healInterval: 3, healAmount: 12 },
         description: '3秒ごとに+12 HP回復'
+      },
+      {
+        level: 4,
+        price: 900,
+        bossCoreCost: 3,
+        stats: { healInterval: 2.5, healAmount: 15 },
+        description: '2.5秒ごとに+15 HP回復'
       }
     ]
   },
@@ -260,6 +302,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { moveSpeed: 19.2 },
         description: '移動速度+60%'
+      },
+      {
+        level: 4,
+        price: 400,
+        bossCoreCost: 3,
+        stats: { moveSpeed: 21.6 },
+        description: '移動速度+80%'
       }
     ]
   },
@@ -297,6 +346,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { aimLerp: 0.8 },
         description: '照準速度+129%'
+      },
+      {
+        level: 4,
+        price: 460,
+        bossCoreCost: 3,
+        stats: { aimLerp: 0.9 },
+        description: '照準速度+157%'
       }
     ]
   },
@@ -335,6 +391,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 1,
         stats: { scoreMultiplier: 2.0 },
         description: 'スコア倍率2.0x'
+      },
+      {
+        level: 4,
+        price: 800,
+        bossCoreCost: 3,
+        stats: { scoreMultiplier: 2.5 },
+        description: 'スコア倍率2.5x'
       }
     ]
   },
@@ -372,6 +435,13 @@ export const PARTS_DATA: PartDefinition[] = [
         bossCoreCost: 2,
         stats: { rechargeCooldown: 3, rechargePercent: 0.8 },
         description: '3秒無傷で80%シールド回復'
+      },
+      {
+        level: 4,
+        price: 1040,
+        bossCoreCost: 3,
+        stats: { rechargeCooldown: 2, rechargePercent: 1.0 },
+        description: '2秒無傷で100%シールド回復'
       }
     ]
   }

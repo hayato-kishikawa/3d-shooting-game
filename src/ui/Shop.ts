@@ -7,6 +7,8 @@ interface ShopOptions {
   onClose: () => void
 }
 
+const IMPLEMENTED_PARTS = ['laser_cannon', 'multi_shot', 'shield_generator', 'booster']
+
 export class Shop {
   private readonly root: HTMLDivElement
   private readonly partsManager: PartsManager
@@ -114,7 +116,9 @@ export class Shop {
   }
 
   private renderCategoryParts(category: PartCategory): string {
-    const parts = this.partsManager.getAllParts().filter((p) => p.category === category)
+    const parts = this.partsManager
+      .getAllParts()
+      .filter((p) => p.category === category && IMPLEMENTED_PARTS.includes(p.id))
     return parts.map((part) => this.renderPartCard(part)).join('')
   }
 
@@ -124,20 +128,18 @@ export class Shop {
     const nextLevel = currentLevel + 1
     const nextLevelData = part.levels[nextLevel]
     const canUpgrade = this.partsManager.canUpgrade(part.id)
+    const maxLevel = part.levels.length - 1
     const isMaxLevel = !nextLevelData
 
     return `
       <div style="background: #1e293b; padding: 15px; border-radius: 8px; border: 2px solid ${isMaxLevel ? '#10b981' : '#475569'};">
-        <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #3b82f6;">${part.name}</h3>
+        <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #3b82f6;">${part.name} <span style="font-size: 14px; color: #fbbf24;">Lv.${currentLevel} / ${maxLevel}</span></h3>
         <p style="margin: 0 0 10px 0; font-size: 12px; color: #94a3b8;">${part.nameJP}</p>
         <p style="margin: 0 0 15px 0; font-size: 14px; color: #cbd5e1;">${part.description}</p>
 
         <div style="margin-bottom: 15px;">
-          <div style="font-size: 14px; color: #fbbf24; margin-bottom: 5px;">
-            Current Level: ${currentLevel} ${isMaxLevel ? '(MAX)' : ''}
-          </div>
-          <div style="font-size: 12px; color: #94a3b8;">
-            ${currentLevelData?.description ?? 'Not equipped'}
+          <div style="font-size: 14px; color: #10b981; margin-bottom: 5px;">
+            Current: ${currentLevelData?.description ?? 'Not equipped'}
           </div>
         </div>
 
@@ -145,11 +147,10 @@ export class Shop {
           nextLevelData
             ? `
           <div style="border-top: 1px solid #475569; padding-top: 10px; margin-bottom: 10px;">
-            <div style="font-size: 14px; color: #10b981; margin-bottom: 5px;">Next Level: ${nextLevel}</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">${nextLevelData.description}</div>
+            <div style="font-size: 14px; color: #3b82f6; margin-bottom: 5px;">Next: ${nextLevelData.description}</div>
             <div style="font-size: 14px; margin-bottom: 5px;">
               Cost: <span style="color: #fbbf24;">${nextLevelData.price}</span> pt
-              ${nextLevelData.bossCoreCost > 0 ? ` + <span style="color: #8b5cf6;">${nextLevelData.bossCoreCost}</span> cores` : ''}
+              ${nextLevelData.bossCoreCost > 0 ? ` + <span style="color: #8b5cf6;">${nextLevelData.bossCoreCost}</span> boss cores` : ''}
             </div>
           </div>
 
@@ -169,7 +170,7 @@ export class Shop {
             "
             ${canUpgrade ? '' : 'disabled'}
           >
-            ${canUpgrade ? 'UPGRADE' : 'INSUFFICIENT RESOURCES'}
+            ${canUpgrade ? `Upgrade (Lv.${currentLevel} → Lv.${nextLevel})` : 'INSUFFICIENT RESOURCES'}
           </button>
         `
             : '<div style="text-align: center; padding: 10px; color: #10b981; font-size: 16px;">MAX LEVEL</div>'
