@@ -16,6 +16,7 @@ import { Renderer } from '../graphics/Renderer'
 import { GameCamera } from '../graphics/Camera'
 import { Player } from './Player'
 import { BulletPool } from './Bullet'
+import { EnemyManager } from './Enemy'
 
 type GameOptions = {
   container: HTMLElement
@@ -27,6 +28,7 @@ export class Game {
   private readonly camera: GameCamera
   private readonly player: Player
   private readonly bullets: BulletPool
+  private readonly enemies: EnemyManager
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
   private animationFrameId: number | null = null
@@ -41,6 +43,7 @@ export class Game {
     this.renderer = new Renderer(options.container)
     this.camera = new GameCamera()
     this.bullets = new BulletPool()
+    this.enemies = new EnemyManager()
     this.player = new Player({
       camera: this.camera.instance,
       inputElement: options.container,
@@ -65,6 +68,7 @@ export class Game {
     this.renderer.dispose()
     this.player.dispose()
     this.bullets.dispose()
+    this.enemies.dispose()
     window.removeEventListener('resize', this.resizeHandler)
   }
 
@@ -94,6 +98,7 @@ export class Game {
     this.camera.moveTowards(this.desiredCameraPosition, 0.08)
 
     this.bullets.update(delta)
+    this.enemies.update(delta)
     this.scrollFloor(delta)
   }
 
@@ -124,6 +129,7 @@ export class Game {
 
     this.scene.add(this.player.object)
     this.scene.add(this.bullets.group)
+    this.scene.add(this.enemies.group)
 
     const runwaySegments = this.createRunwaySegments()
     runwaySegments.forEach((segment) => this.scene.add(segment))
