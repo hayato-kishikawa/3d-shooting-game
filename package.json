@@ -7,6 +7,8 @@
     "type": "git",
     "url": "https://github.com/hayato-kishikawa/3d-shooting-game"
   },
+  "keywords": ["threejs", "typescript", "game", "3d", "shooting"],
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
