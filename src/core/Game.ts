@@ -19,6 +19,7 @@ import { BulletPool } from './Bullet'
 import { EnemyManager } from './Enemy'
 import { checkBulletEnemyCollisions, checkPlayerEnemyCollision } from './Collision'
 import { HUD } from '../ui/HUD'
+import { GameOver } from '../ui/GameOver'
 
 type GameOptions = {
   container: HTMLElement
@@ -32,10 +33,12 @@ export class Game {
   private readonly bullets: BulletPool
   private readonly enemies: EnemyManager
   private readonly hud: HUD
+  private readonly gameOver: GameOver
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
   private animationFrameId: number | null = null
   private elapsed = 0
+  private isGameOver = false
 
   private readonly cameraTarget = new Vector3()
   private readonly cameraOffset = new Vector3(0, 20, 15)
@@ -48,6 +51,10 @@ export class Game {
     this.bullets = new BulletPool()
     this.enemies = new EnemyManager()
     this.hud = new HUD({ container: options.container })
+    this.gameOver = new GameOver({
+      container: options.container,
+      onRestart: () => this.restart()
+    })
     this.player = new Player({
       camera: this.camera.instance,
       inputElement: options.container,
@@ -74,6 +81,7 @@ export class Game {
     this.bullets.dispose()
     this.enemies.dispose()
     this.hud.dispose()
+    this.gameOver.dispose()
     window.removeEventListener('resize', this.resizeHandler)
   }
 
@@ -93,6 +101,10 @@ export class Game {
   }
 
   private update(delta: number): void {
+    if (this.isGameOver) {
+      return
+    }
+
     this.player.update(delta)
     const roll = Math.sin(this.elapsed * 1.2) * 0.12
     this.player.object.rotation.z = roll
@@ -119,10 +131,27 @@ export class Game {
     const playerHit = checkPlayerEnemyCollision(this.player, this.enemies.getActiveEnemies())
     if (playerHit) {
       this.hud.addHP(-10)
-      // TODO: Implement game over when HP reaches 0
+      if (this.hud.getHP() <= 0) {
+        this.triggerGameOver()
+      }
     }
 
     this.scrollFloor(delta)
+  }
+
+  private triggerGameOver(): void {
+    this.isGameOver = true
+    this.gameOver.show(this.hud.getScore())
+  }
+
+  private restart(): void {
+    this.isGameOver = false
+    this.hud.reset()
+    this.player.object.position.set(0, 0, 0)
+
+    // Deactivate all active bullets and enemies
+    this.bullets.getActiveBullets().forEach((bullet) => bullet.deactivate())
+    this.enemies.getActiveEnemies().forEach((enemy) => enemy.deactivate())
   }
 
   private scrollFloor(delta: number): void {
