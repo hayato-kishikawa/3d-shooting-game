@@ -130,6 +130,7 @@ export class Game {
 
     const playerHit = checkPlayerEnemyCollision(this.player, this.enemies.getActiveEnemies())
     if (playerHit) {
+      playerHit.deactivate()
       this.hud.addHP(-10)
       if (this.hud.getHP() <= 0) {
         this.triggerGameOver()

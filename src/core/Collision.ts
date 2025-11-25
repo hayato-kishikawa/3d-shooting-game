@@ -60,20 +60,21 @@ export function checkBulletEnemyCollisions(
 
 /**
  * Check if player collides with any active enemy
+ * Returns the first enemy that collides, or null if none
  */
 export function checkPlayerEnemyCollision(
   player: Player,
   enemies: readonly Enemy[]
-): boolean {
+): Enemy | null {
   for (const enemy of enemies) {
     if (!enemy.isActive()) {
       continue
     }
 
     if (sphereIntersects(player.position, PLAYER_RADIUS, enemy.position, ENEMY_RADIUS)) {
-      return true
+      return enemy
     }
   }
 
-  return false
+  return null
 }
