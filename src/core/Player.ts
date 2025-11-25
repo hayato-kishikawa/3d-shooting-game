@@ -41,7 +41,7 @@ export class Player {
   private readonly tmp = new Vector3()
   private readonly fireOrigin = new Vector3()
   private readonly fireDirection = new Vector3()
-  private readonly movementDirection = new Vector3()
+  private readonly moveDirection = new Vector3()
 
   private pointerFiring = false
   private spaceFiring = false
@@ -123,7 +123,7 @@ export class Player {
   }
 
   private updateMovement(delta: number): void {
-    const direction = this.movementDirection
+    const direction = this.moveDirection
     direction.set(
       (this.keys.has('KeyD') ? 1 : 0) - (this.keys.has('KeyA') ? 1 : 0),
       0,
