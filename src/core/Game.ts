@@ -18,6 +18,7 @@ import { Player } from './Player'
 import { BulletPool } from './Bullet'
 import { EnemyManager } from './Enemy'
 import { checkBulletEnemyCollisions, checkPlayerEnemyCollision } from './Collision'
+import { HUD } from '../ui/HUD'
 
 type GameOptions = {
   container: HTMLElement
@@ -30,6 +31,7 @@ export class Game {
   private readonly player: Player
   private readonly bullets: BulletPool
   private readonly enemies: EnemyManager
+  private readonly hud: HUD
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
   private animationFrameId: number | null = null
@@ -45,6 +47,7 @@ export class Game {
     this.camera = new GameCamera()
     this.bullets = new BulletPool()
     this.enemies = new EnemyManager()
+    this.hud = new HUD({ container: options.container })
     this.player = new Player({
       camera: this.camera.instance,
       inputElement: options.container,
@@ -70,6 +73,7 @@ export class Game {
     this.player.dispose()
     this.bullets.dispose()
     this.enemies.dispose()
+    this.hud.dispose()
     window.removeEventListener('resize', this.resizeHandler)
   }
 
@@ -109,12 +113,13 @@ export class Game {
     bulletHits.forEach((hit) => {
       hit.bullet.deactivate()
       hit.enemy.deactivate()
+      this.hud.addScore(10)
     })
 
     const playerHit = checkPlayerEnemyCollision(this.player, this.enemies.getActiveEnemies())
     if (playerHit) {
-      // TODO: Implement game over / damage system
-      // For now, enemies that hit the player are deactivated
+      this.hud.addHP(-10)
+      // TODO: Implement game over when HP reaches 0
     }
 
     this.scrollFloor(delta)
