@@ -20,6 +20,8 @@ import { EnemyManager } from './Enemy'
 import { checkBulletEnemyCollisions, checkPlayerEnemyCollision } from './Collision'
 import { HUD } from '../ui/HUD'
 import { GameOver } from '../ui/GameOver'
+import { Shop } from '../ui/Shop'
+import { PartsManager } from './PartsManager'
 
 type GameOptions = {
   container: HTMLElement
@@ -34,8 +36,11 @@ export class Game {
   private readonly enemies: EnemyManager
   private readonly hud: HUD
   private readonly gameOver: GameOver
+  private readonly shop: Shop
+  private readonly partsManager: PartsManager
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
+  private readonly shopKeyHandler = (e: KeyboardEvent) => this.handleShopKey(e)
   private animationFrameId: number | null = null
   private elapsed = 0
   private isGameOver = false
@@ -50,10 +55,16 @@ export class Game {
     this.camera = new GameCamera()
     this.bullets = new BulletPool()
     this.enemies = new EnemyManager()
+    this.partsManager = new PartsManager()
     this.hud = new HUD({ container: options.container })
     this.gameOver = new GameOver({
       container: options.container,
       onRestart: () => this.restart()
+    })
+    this.shop = new Shop({
+      container: options.container,
+      partsManager: this.partsManager,
+      onClose: () => this.handleShopClose()
     })
     this.player = new Player({
       camera: this.camera.instance,
@@ -71,6 +82,7 @@ export class Game {
     this.clock.start()
     this.handleResize()
     window.addEventListener('resize', this.resizeHandler)
+    window.addEventListener('keydown', this.shopKeyHandler)
     this.animationFrameId = requestAnimationFrame(this.loop)
   }
 
@@ -82,7 +94,10 @@ export class Game {
     this.enemies.dispose()
     this.hud.dispose()
     this.gameOver.dispose()
+    this.shop.dispose()
+    this.partsManager.dispose()
     window.removeEventListener('resize', this.resizeHandler)
+    window.removeEventListener('keydown', this.shopKeyHandler)
   }
 
   private stop(): void {
@@ -101,7 +116,7 @@ export class Game {
   }
 
   private update(delta: number): void {
-    if (this.isGameOver) {
+    if (this.isGameOver || this.shop.isVisible()) {
       return
     }
 
@@ -125,7 +140,9 @@ export class Game {
     bulletHits.forEach((hit) => {
       hit.bullet.deactivate()
       hit.enemy.deactivate()
-      this.hud.addScore(10)
+      const scoreGained = 10
+      this.hud.addScore(scoreGained)
+      this.partsManager.addScore(scoreGained)
     })
 
     const playerHit = checkPlayerEnemyCollision(this.player, this.enemies.getActiveEnemies())
@@ -214,5 +231,21 @@ export class Game {
       this.scrollables.push(segment)
     }
     return segments
+  }
+
+  private handleShopKey(e: KeyboardEvent): void {
+    if (e.key.toLowerCase() === 's' && !this.isGameOver) {
+      if (this.shop.isVisible()) {
+        this.shop.hide()
+      } else {
+        this.shop.show()
+      }
+    } else if (e.key === 'Escape' && this.shop.isVisible()) {
+      this.shop.hide()
+    }
+  }
+
+  private handleShopClose(): void {
+    // Shop closed, game resumes automatically via update() check
   }
 }
