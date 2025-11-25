@@ -11,6 +11,10 @@ const BOSS_SIZE = { width: 6, height: 3, depth: 3 }
 const BOSS_SWAY_AMPLITUDE = 4
 const BOSS_SWAY_PERIOD = 3.0
 const FIRE_INTERVAL = 1.8
+const HP_THRESHOLD_3WAY = 0.5
+const HP_THRESHOLD_RUSH = 0.3
+const RUSH_INTERVAL = 4.0
+const RUSH_SPEED = 15
 
 export class Boss {
   readonly object = new Group()
@@ -22,6 +26,9 @@ export class Boss {
   private swayPhase = 0
   private centerX = 0
   private fireCooldown = 0
+  private rushCooldown = 0
+  private isRushing = false
+  private rushDuration = 0
   private onFire?: (origin: Vector3, direction: Vector3) => void
 
   constructor() {
@@ -47,6 +54,9 @@ export class Boss {
     this.centerX = position.x
     this.swayPhase = 0
     this.fireCooldown = FIRE_INTERVAL
+    this.rushCooldown = RUSH_INTERVAL
+    this.isRushing = false
+    this.rushDuration = 0
     this.onFire = onFire
     this.object.position.copy(position)
     this.active = true
@@ -58,15 +68,42 @@ export class Boss {
       return
     }
 
-    // Left-right sway motion
-    this.swayPhase += delta
-    const swayOffset = Math.sin((this.swayPhase / BOSS_SWAY_PERIOD) * Math.PI * 2) * BOSS_SWAY_AMPLITUDE
-    this.object.position.x = this.centerX + swayOffset
+    const hpPercent = this.maxHP > 0 ? this.hp / this.maxHP : 0
+
+    // Rush attack (HP ≤ 30%)
+    if (hpPercent <= HP_THRESHOLD_RUSH && playerPosition) {
+      this.rushCooldown -= delta
+
+      if (this.isRushing) {
+        this.rushDuration -= delta
+        const direction = new Vector3()
+          .copy(playerPosition)
+          .sub(this.object.position)
+        direction.y = 0
+        direction.normalize()
+        this.object.position.addScaledVector(direction, RUSH_SPEED * delta)
+
+        if (this.rushDuration <= 0) {
+          this.isRushing = false
+          this.rushCooldown = RUSH_INTERVAL
+        }
+      } else if (this.rushCooldown <= 0) {
+        this.isRushing = true
+        this.rushDuration = 1.2
+      }
+    }
+
+    // Left-right sway motion (when not rushing)
+    if (!this.isRushing) {
+      this.swayPhase += delta
+      const swayOffset = Math.sin((this.swayPhase / BOSS_SWAY_PERIOD) * Math.PI * 2) * BOSS_SWAY_AMPLITUDE
+      this.object.position.x = this.centerX + swayOffset
+    }
 
     // Fire at player
     this.fireCooldown -= delta
     if (this.fireCooldown <= 0 && this.onFire && playerPosition) {
-      this.fire(playerPosition)
+      this.fire(playerPosition, hpPercent)
       this.fireCooldown = FIRE_INTERVAL
     }
   }
@@ -108,7 +145,7 @@ export class Boss {
     })
   }
 
-  private fire(playerPosition: Vector3): void {
+  private fire(playerPosition: Vector3, hpPercent: number): void {
     if (!this.onFire) {
       return
     }
@@ -123,7 +160,31 @@ export class Boss {
     origin.y += 0.5
     origin.addScaledVector(direction, 2.0)
 
+    // Always fire center bullet
     this.onFire(origin, direction)
+
+    // 3-way spread when HP ≤ 50%
+    if (hpPercent <= HP_THRESHOLD_3WAY) {
+      const spreadAngle = Math.PI / 8
+
+      // Left bullet
+      const leftDir = direction.clone()
+      const cosLeft = Math.cos(-spreadAngle)
+      const sinLeft = Math.sin(-spreadAngle)
+      const leftX = leftDir.x * cosLeft - leftDir.z * sinLeft
+      const leftZ = leftDir.x * sinLeft + leftDir.z * cosLeft
+      leftDir.set(leftX, 0, leftZ).normalize()
+      this.onFire(origin, leftDir)
+
+      // Right bullet
+      const rightDir = direction.clone()
+      const cosRight = Math.cos(spreadAngle)
+      const sinRight = Math.sin(spreadAngle)
+      const rightX = rightDir.x * cosRight - rightDir.z * sinRight
+      const rightZ = rightDir.x * sinRight + rightDir.z * cosRight
+      rightDir.set(rightX, 0, rightZ).normalize()
+      this.onFire(origin, rightDir)
+    }
   }
 
   private buildGeometry(): void {
