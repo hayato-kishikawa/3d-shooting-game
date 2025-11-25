@@ -1,7 +1,12 @@
 {
   "name": "3d-shooting-game",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A 3D shooting game built with Three.js and TypeScript",
+  "author": "hayato-kishikawa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hayato-kishikawa/3d-shooting-game"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
