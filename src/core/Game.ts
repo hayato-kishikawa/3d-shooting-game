@@ -29,7 +29,7 @@ import { Shop } from '../ui/Shop'
 import { BossHealthBar } from '../ui/BossHealthBar'
 import { StageClear } from '../ui/StageClear'
 import { PartsManager } from './PartsManager'
-import { Boss } from './Boss'
+import { Boss, type BossType } from './Boss'
 import { BossBulletPool } from './BossBullet'
 
 type GameOptions = {
@@ -183,8 +183,12 @@ export class Game {
 
     // Boss spawn check
     const killCount = this.enemies.getKillCount()
-    if (!this.bossActive && !this.boss.isActive() && killCount >= 20) {
-      this.spawnBoss()
+    if (!this.bossActive && !this.boss.isActive()) {
+      if (killCount >= 50) {
+        this.spawnBoss('destroyer')
+      } else if (killCount >= 20) {
+        this.spawnBoss('dreadnought')
+      }
     }
 
     // Boss update and collision
@@ -243,18 +247,23 @@ export class Game {
     this.enemies.setSpawningEnabled(true)
   }
 
-  private spawnBoss(): void {
+  private spawnBoss(type: BossType): void {
     this.bossActive = true
     this.enemies.setSpawningEnabled(false)
 
     const bossPosition = new Vector3(0, 0, -20)
-    const bossHP = 50
 
-    this.boss.spawn(bossPosition, bossHP, (origin, direction) => {
+    this.boss.spawn(bossPosition, type, (origin, direction) => {
       this.bossBullets.fire(origin, direction)
     })
 
-    this.bossHealthBar.show(bossHP, 'BOSS')
+    const bossNames: Record<BossType, string> = {
+      dreadnought: 'DREADNOUGHT',
+      destroyer: 'DESTROYER',
+      annihilator: 'ANNIHILATOR'
+    }
+
+    this.bossHealthBar.show(this.boss.maxHitPoints, bossNames[type])
   }
 
   private handleBossDefeat(): void {

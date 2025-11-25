@@ -16,9 +16,8 @@ describe('Boss', () => {
   describe('spawn', () => {
     it('activates the boss at the given position with HP', () => {
       const position = new Vector3(0, 0, -20)
-      const hp = 50
 
-      boss.spawn(position, hp)
+      boss.spawn(position, 'dreadnought')
 
       expect(boss.isActive()).toBe(true)
       expect(boss.currentHP).toBe(50)
@@ -31,7 +30,7 @@ describe('Boss', () => {
       const position = new Vector3(0, 0, -20)
       const onFire = vi.fn()
 
-      boss.spawn(position, 50, onFire)
+      boss.spawn(position, 'dreadnought', onFire)
 
       expect(boss.isActive()).toBe(true)
     })
@@ -48,7 +47,7 @@ describe('Boss', () => {
 
     it('performs left-right sway motion when active', () => {
       const position = new Vector3(0, 0, -20)
-      boss.spawn(position, 50)
+      boss.spawn(position, 'dreadnought')
 
       const initialX = boss.position.x
 
@@ -62,7 +61,7 @@ describe('Boss', () => {
 
     it('fires at player position after cooldown', () => {
       const onFire = vi.fn()
-      boss.spawn(new Vector3(0, 0, -20), 50, onFire)
+      boss.spawn(new Vector3(0, 0, -20), 'dreadnought', onFire)
 
       const playerPosition = new Vector3(2, 0, 5)
 
@@ -78,7 +77,7 @@ describe('Boss', () => {
 
   describe('takeDamage', () => {
     beforeEach(() => {
-      boss.spawn(new Vector3(0, 0, -20), 50)
+      boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
     })
 
     it('reduces HP by damage amount', () => {
@@ -120,7 +119,7 @@ describe('Boss', () => {
 
   describe('deactivate', () => {
     it('makes boss inactive and invisible', () => {
-      boss.spawn(new Vector3(0, 0, -20), 50)
+      boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
 
       boss.deactivate()
 
@@ -129,7 +128,7 @@ describe('Boss', () => {
     })
 
     it('is safe to call multiple times', () => {
-      boss.spawn(new Vector3(0, 0, -20), 50)
+      boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
 
       boss.deactivate()
       boss.deactivate()
@@ -140,7 +139,7 @@ describe('Boss', () => {
 
   describe('position', () => {
     it('returns the boss object position', () => {
-      boss.spawn(new Vector3(5, 2, -10), 50)
+      boss.spawn(new Vector3(5, 2, -10), 'dreadnought')
 
       expect(boss.position.x).toBe(5)
       expect(boss.position.y).toBe(2)
@@ -149,10 +148,10 @@ describe('Boss', () => {
   })
 
   describe('attack patterns', () => {
-    describe('3-way spread', () => {
+    describe('3-way spread (Dreadnought)', () => {
       it('fires single bullet when HP > 50%', () => {
         const onFire = vi.fn()
-        boss.spawn(new Vector3(0, 0, -20), 100, onFire)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought', onFire)
 
         const playerPosition = new Vector3(2, 0, 5)
         boss.update(2.0, playerPosition)
@@ -163,11 +162,11 @@ describe('Boss', () => {
 
       it('fires 3-way spread when HP ≤ 50%', () => {
         const onFire = vi.fn()
-        boss.spawn(new Vector3(0, 0, -20), 100, onFire)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought', onFire)
 
-        // Reduce HP to 50%
-        boss.takeDamage(50)
-        expect(boss.currentHP).toBe(50)
+        // Reduce HP to 50% (Dreadnought HP is 50, so reduce to 25)
+        boss.takeDamage(25)
+        expect(boss.currentHP).toBe(25)
 
         const playerPosition = new Vector3(2, 0, 5)
         boss.update(2.0, playerPosition)
@@ -178,11 +177,11 @@ describe('Boss', () => {
 
       it('fires 3-way spread when HP < 50%', () => {
         const onFire = vi.fn()
-        boss.spawn(new Vector3(0, 0, -20), 100, onFire)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought', onFire)
 
-        // Reduce HP to 40%
-        boss.takeDamage(60)
-        expect(boss.currentHP).toBe(40)
+        // Reduce HP to 40% (Dreadnought HP is 50, so reduce to 20)
+        boss.takeDamage(30)
+        expect(boss.currentHP).toBe(20)
 
         const playerPosition = new Vector3(2, 0, 5)
         boss.update(2.0, playerPosition)
@@ -192,9 +191,9 @@ describe('Boss', () => {
       })
     })
 
-    describe('rush attack', () => {
+    describe('rush attack (Dreadnought)', () => {
       it('does not rush when HP > 30%', () => {
-        boss.spawn(new Vector3(0, 0, -20), 100)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
         const initialZ = boss.position.z
 
         const playerPosition = new Vector3(0, 0, 10)
@@ -205,11 +204,11 @@ describe('Boss', () => {
       })
 
       it('rushes toward player when HP ≤ 30%', () => {
-        boss.spawn(new Vector3(0, 0, -20), 100)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
 
-        // Reduce HP to 30%
-        boss.takeDamage(70)
-        expect(boss.currentHP).toBe(30)
+        // Reduce HP to 30% (Dreadnought HP is 50, so reduce to 15)
+        boss.takeDamage(35)
+        expect(boss.currentHP).toBe(15)
 
         const playerPosition = new Vector3(0, 0, 10)
         const initialZ = boss.position.z
@@ -225,10 +224,10 @@ describe('Boss', () => {
       })
 
       it('rush attack has limited duration', () => {
-        boss.spawn(new Vector3(0, 0, -20), 100)
+        boss.spawn(new Vector3(0, 0, -20), 'dreadnought')
 
-        // Reduce HP to 30%
-        boss.takeDamage(70)
+        // Reduce HP to 30% (Dreadnought HP is 50, so reduce to 15)
+        boss.takeDamage(35)
 
         const playerPosition = new Vector3(0, 0, 10)
 
@@ -252,6 +251,85 @@ describe('Boss', () => {
         // During rush: ~15 units/sec * 0.5sec = ~7.5 units
         // After rush: should not move much more toward player
         expect(afterRushZ).toBeGreaterThan(midRushZ - 5)
+      })
+    })
+
+    describe('5-way spread (Destroyer)', () => {
+      it('fires single bullet when HP > 40%', () => {
+        const onFire = vi.fn()
+        boss.spawn(new Vector3(0, 0, -20), 'destroyer', onFire)
+
+        const playerPosition = new Vector3(2, 0, 5)
+        boss.update(1.0, playerPosition)
+
+        // Only 1 call (center bullet)
+        expect(onFire).toHaveBeenCalledTimes(1)
+      })
+
+      it('fires 5-way spread when HP ≤ 40%', () => {
+        const onFire = vi.fn()
+        boss.spawn(new Vector3(0, 0, -20), 'destroyer', onFire)
+
+        // Reduce HP to 40% (Destroyer HP is 120, so reduce to 48)
+        boss.takeDamage(72)
+        expect(boss.currentHP).toBe(48)
+
+        const playerPosition = new Vector3(2, 0, 5)
+        boss.update(1.0, playerPosition)
+
+        // 5 calls (5-way spread)
+        expect(onFire).toHaveBeenCalledTimes(5)
+      })
+
+      it('has faster fire rate (0.8s interval)', () => {
+        const onFire = vi.fn()
+        boss.spawn(new Vector3(0, 0, -20), 'destroyer', onFire)
+
+        const playerPosition = new Vector3(2, 0, 5)
+
+        // Should fire after 0.8s
+        boss.update(0.9, playerPosition)
+        expect(onFire).toHaveBeenCalledTimes(1)
+
+        // Should fire again after another 0.8s
+        boss.update(0.9, playerPosition)
+        expect(onFire).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    describe('circular strafe (Destroyer)', () => {
+      it('performs circular strafe movement', () => {
+        boss.spawn(new Vector3(0, 0, -20), 'destroyer')
+
+        const initialX = boss.position.x
+        const initialZ = boss.position.z
+
+        // Update over time to see strafe
+        boss.update(1.0)
+
+        // Position should change due to circular movement
+        const movedX = boss.position.x !== initialX
+        const movedZ = boss.position.z !== initialZ
+
+        // At least one axis should have moved
+        expect(movedX || movedZ).toBe(true)
+      })
+
+      it('does not rush (rushThreshold is 0)', () => {
+        boss.spawn(new Vector3(0, 0, -20), 'destroyer')
+
+        // Reduce HP to very low
+        boss.takeDamage(110)
+        expect(boss.currentHP).toBe(10)
+
+        const playerPosition = new Vector3(0, 0, 10)
+        const initialZ = boss.position.z
+
+        // Update for long time
+        boss.update(5.0, playerPosition)
+
+        // Should still be near initial Z (circular strafe, not rush)
+        expect(Math.abs(boss.position.z - initialZ)).toBeLessThan(3)
       })
     })
   })

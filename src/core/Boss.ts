@@ -7,14 +7,67 @@ import {
   Vector3
 } from 'three'
 
-const BOSS_SIZE = { width: 6, height: 3, depth: 3 }
-const BOSS_SWAY_AMPLITUDE = 4
-const BOSS_SWAY_PERIOD = 3.0
-const FIRE_INTERVAL = 1.8
-const HP_THRESHOLD_3WAY = 0.5
-const HP_THRESHOLD_RUSH = 0.3
-const RUSH_INTERVAL = 4.0
-const RUSH_SPEED = 15
+export type BossType = 'dreadnought' | 'destroyer' | 'annihilator'
+
+interface BossConfig {
+  hp: number
+  size: { width: number; height: number; depth: number }
+  fireInterval: number
+  spreadThreshold: number
+  spreadCount: number
+  rushThreshold: number
+  rushSpeed: number
+  rushInterval: number
+  movementType: 'sway' | 'strafe' | 'tracking'
+  swayAmplitude?: number
+  swayPeriod?: number
+  strafeRadius?: number
+  strafePeriod?: number
+}
+
+const BOSS_CONFIGS: Record<BossType, BossConfig> = {
+  dreadnought: {
+    hp: 50,
+    size: { width: 6, height: 3, depth: 3 },
+    fireInterval: 1.8,
+    spreadThreshold: 0.5,
+    spreadCount: 3,
+    rushThreshold: 0.3,
+    rushSpeed: 15,
+    rushInterval: 4.0,
+    movementType: 'sway',
+    swayAmplitude: 4,
+    swayPeriod: 3.0
+  },
+  destroyer: {
+    hp: 120,
+    size: { width: 5, height: 2.5, depth: 2.5 },
+    fireInterval: 0.8,
+    spreadThreshold: 0.4,
+    spreadCount: 5,
+    rushThreshold: 0,
+    rushSpeed: 0,
+    rushInterval: 0,
+    movementType: 'strafe',
+    strafeRadius: 6,
+    strafePeriod: 4.0
+  },
+  annihilator: {
+    hp: 250,
+    size: { width: 8, height: 4, depth: 4 },
+    fireInterval: 1.2,
+    spreadThreshold: 0.5,
+    spreadCount: 7,
+    rushThreshold: 0.5,
+    rushSpeed: 20,
+    rushInterval: 10.0,
+    movementType: 'tracking',
+    swayAmplitude: 2,
+    swayPeriod: 2.0
+  }
+}
+
+const RUSH_DURATION = 1.2
 
 export class Boss {
   readonly object = new Group()
@@ -23,8 +76,11 @@ export class Boss {
   private hp = 0
   private maxHP = 0
   private active = false
+  private config: BossConfig = BOSS_CONFIGS.dreadnought
   private swayPhase = 0
+  private strafePhase = 0
   private centerX = 0
+  private centerZ = 0
   private fireCooldown = 0
   private rushCooldown = 0
   private isRushing = false
@@ -33,7 +89,6 @@ export class Boss {
 
   constructor() {
     this.object.visible = false
-    this.buildGeometry()
   }
 
   get position(): Vector3 {
@@ -48,17 +103,31 @@ export class Boss {
     return this.maxHP
   }
 
-  spawn(position: Vector3, hp: number, onFire?: (origin: Vector3, direction: Vector3) => void): void {
-    this.hp = hp
-    this.maxHP = hp
+  spawn(
+    position: Vector3,
+    type: BossType = 'dreadnought',
+    onFire?: (origin: Vector3, direction: Vector3) => void
+  ): void {
+    // Clear old geometry if exists
+    this.clearGeometry()
+
+    this.config = BOSS_CONFIGS[type]
+    this.hp = this.config.hp
+    this.maxHP = this.config.hp
     this.centerX = position.x
+    this.centerZ = position.z
     this.swayPhase = 0
-    this.fireCooldown = FIRE_INTERVAL
-    this.rushCooldown = RUSH_INTERVAL
+    this.strafePhase = 0
+    this.fireCooldown = this.config.fireInterval
+    this.rushCooldown = this.config.rushInterval
     this.isRushing = false
     this.rushDuration = 0
     this.onFire = onFire
     this.object.position.copy(position)
+
+    // Build geometry based on type
+    this.buildGeometry()
+
     this.active = true
     this.object.visible = true
   }
@@ -70,8 +139,8 @@ export class Boss {
 
     const hpPercent = this.maxHP > 0 ? this.hp / this.maxHP : 0
 
-    // Rush attack (HP ≤ 30%)
-    if (hpPercent <= HP_THRESHOLD_RUSH && playerPosition) {
+    // Rush attack (if configured)
+    if (this.config.rushThreshold > 0 && hpPercent <= this.config.rushThreshold && playerPosition) {
       this.rushCooldown -= delta
 
       if (this.isRushing) {
@@ -81,30 +150,58 @@ export class Boss {
           .sub(this.object.position)
         direction.y = 0
         direction.normalize()
-        this.object.position.addScaledVector(direction, RUSH_SPEED * delta)
+        this.object.position.addScaledVector(direction, this.config.rushSpeed * delta)
 
         if (this.rushDuration <= 0) {
           this.isRushing = false
-          this.rushCooldown = RUSH_INTERVAL
+          this.rushCooldown = this.config.rushInterval
         }
       } else if (this.rushCooldown <= 0) {
         this.isRushing = true
-        this.rushDuration = 1.2
+        this.rushDuration = RUSH_DURATION
       }
     }
 
-    // Left-right sway motion (when not rushing)
+    // Movement pattern (when not rushing)
     if (!this.isRushing) {
-      this.swayPhase += delta
-      const swayOffset = Math.sin((this.swayPhase / BOSS_SWAY_PERIOD) * Math.PI * 2) * BOSS_SWAY_AMPLITUDE
-      this.object.position.x = this.centerX + swayOffset
+      this.updateMovement(delta)
     }
 
     // Fire at player
     this.fireCooldown -= delta
     if (this.fireCooldown <= 0 && this.onFire && playerPosition) {
       this.fire(playerPosition, hpPercent)
-      this.fireCooldown = FIRE_INTERVAL
+      this.fireCooldown = this.config.fireInterval
+    }
+  }
+
+  private updateMovement(delta: number): void {
+    switch (this.config.movementType) {
+      case 'sway':
+        this.swayPhase += delta
+        const swayOffset =
+          Math.sin((this.swayPhase / (this.config.swayPeriod ?? 3)) * Math.PI * 2) *
+          (this.config.swayAmplitude ?? 4)
+        this.object.position.x = this.centerX + swayOffset
+        break
+
+      case 'strafe':
+        this.strafePhase += delta
+        const angle = (this.strafePhase / (this.config.strafePeriod ?? 4)) * Math.PI * 2
+        const radius = this.config.strafeRadius ?? 6
+        this.object.position.x = this.centerX + Math.cos(angle) * radius
+        this.object.position.z = this.centerZ + Math.sin(angle) * radius * 0.3
+        break
+
+      case 'tracking':
+        // Slow tracking toward center with slight sway
+        this.swayPhase += delta
+        const trackSway =
+          Math.sin((this.swayPhase / (this.config.swayPeriod ?? 2)) * Math.PI * 2) *
+          (this.config.swayAmplitude ?? 2)
+        const targetX = this.centerX + trackSway
+        this.object.position.x += (targetX - this.object.position.x) * 0.5 * delta
+        break
     }
   }
 
@@ -135,14 +232,7 @@ export class Boss {
   }
 
   dispose(): void {
-    this.meshes.forEach((mesh) => {
-      mesh.geometry.dispose()
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((material) => material.dispose())
-      } else {
-        mesh.material.dispose()
-      }
-    })
+    this.clearGeometry()
   }
 
   private fire(playerPosition: Vector3, hpPercent: number): void {
@@ -160,37 +250,51 @@ export class Boss {
     origin.y += 0.5
     origin.addScaledVector(direction, 2.0)
 
-    // Always fire center bullet
-    this.onFire(origin, direction)
+    // Determine spread count based on HP threshold
+    const shouldSpread = hpPercent <= this.config.spreadThreshold
+    const bulletCount = shouldSpread ? this.config.spreadCount : 1
 
-    // 3-way spread when HP ≤ 50%
-    if (hpPercent <= HP_THRESHOLD_3WAY) {
+    if (bulletCount === 1) {
+      // Single bullet
+      this.onFire(origin, direction)
+    } else {
+      // Multi-way spread
       const spreadAngle = Math.PI / 8
+      const angleStep = (spreadAngle * 2) / (bulletCount - 1)
+      const startAngle = -spreadAngle
 
-      // Left bullet
-      const leftDir = direction.clone()
-      const cosLeft = Math.cos(-spreadAngle)
-      const sinLeft = Math.sin(-spreadAngle)
-      const leftX = leftDir.x * cosLeft - leftDir.z * sinLeft
-      const leftZ = leftDir.x * sinLeft + leftDir.z * cosLeft
-      leftDir.set(leftX, 0, leftZ).normalize()
-      this.onFire(origin, leftDir)
-
-      // Right bullet
-      const rightDir = direction.clone()
-      const cosRight = Math.cos(spreadAngle)
-      const sinRight = Math.sin(spreadAngle)
-      const rightX = rightDir.x * cosRight - rightDir.z * sinRight
-      const rightZ = rightDir.x * sinRight + rightDir.z * cosRight
-      rightDir.set(rightX, 0, rightZ).normalize()
-      this.onFire(origin, rightDir)
+      for (let i = 0; i < bulletCount; i++) {
+        const angle = startAngle + angleStep * i
+        const spreadDir = direction.clone()
+        const cos = Math.cos(angle)
+        const sin = Math.sin(angle)
+        const x = spreadDir.x * cos - spreadDir.z * sin
+        const z = spreadDir.x * sin + spreadDir.z * cos
+        spreadDir.set(x, 0, z).normalize()
+        this.onFire(origin, spreadDir)
+      }
     }
   }
 
+  private clearGeometry(): void {
+    this.meshes.forEach((mesh) => {
+      mesh.geometry.dispose()
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach((material) => material.dispose())
+      } else {
+        mesh.material.dispose()
+      }
+      this.object.remove(mesh)
+    })
+    this.meshes.length = 0
+  }
+
   private buildGeometry(): void {
-    // Main hull - large dark box
+    const size = this.config.size
+
+    // Main hull - dark box
     const hull = new Mesh(
-      new BoxGeometry(BOSS_SIZE.width, BOSS_SIZE.height, BOSS_SIZE.depth),
+      new BoxGeometry(size.width, size.height, size.depth),
       new MeshStandardMaterial({
         color: 0x7f1d1d,
         emissive: 0x450a0a,
@@ -201,7 +305,8 @@ export class Boss {
     this.addMesh(hull)
 
     // Cannons - two cones on sides
-    const cannonGeometry = new ConeGeometry(0.4, 1.5, 8)
+    const cannonScale = size.width / 6
+    const cannonGeometry = new ConeGeometry(0.4 * cannonScale, 1.5 * cannonScale, 8)
     cannonGeometry.rotateX(Math.PI / 2)
 
     const cannonMaterial = new MeshStandardMaterial({
@@ -209,24 +314,26 @@ export class Boss {
       emissive: 0x991b1b
     })
 
+    const cannonOffset = size.width * 0.4
     const leftCannon = new Mesh(cannonGeometry, cannonMaterial)
-    leftCannon.position.set(-2.5, 0, 1.0)
+    leftCannon.position.set(-cannonOffset, 0, 1.0 * cannonScale)
     this.addMesh(leftCannon)
 
     const rightCannon = new Mesh(cannonGeometry.clone(), cannonMaterial.clone())
-    rightCannon.position.set(2.5, 0, 1.0)
+    rightCannon.position.set(cannonOffset, 0, 1.0 * cannonScale)
     this.addMesh(rightCannon)
 
     // Core - glowing center
+    const coreSize = Math.min(size.width, size.height, size.depth) * 0.3
     const core = new Mesh(
-      new BoxGeometry(1.2, 1.2, 1.2),
+      new BoxGeometry(coreSize, coreSize, coreSize),
       new MeshStandardMaterial({
         color: 0xff0000,
         emissive: 0xff0000,
         emissiveIntensity: 0.8
       })
     )
-    core.position.set(0, 0, 0.5)
+    core.position.set(0, 0, size.depth * 0.2)
     this.addMesh(core)
   }
 
