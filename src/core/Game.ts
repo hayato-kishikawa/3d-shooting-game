@@ -54,11 +54,15 @@ export class Game {
   private readonly clock = new Clock()
   private readonly resizeHandler = () => this.handleResize()
   private readonly shopKeyHandler = (e: KeyboardEvent) => this.handleShopKey(e)
+  private readonly stageClearKeyHandler = (e: KeyboardEvent) => this.handleStageClearKey(e)
   private animationFrameId: number | null = null
   private elapsed = 0
   private isGameOver = false
   private bossActive = false
   private currentBossType: BossType | null = null
+  private currentStage = 1
+  private readonly stageSequence: BossType[] = ['dreadnought', 'destroyer', 'annihilator']
+  private isFinalVictory = false
 
   private readonly cameraTarget = new Vector3()
   private readonly cameraOffset = new Vector3(0, 20, 15)
@@ -86,7 +90,8 @@ export class Game {
     this.bossHealthBar = new BossHealthBar({ container: options.container })
     this.stageClear = new StageClear({
       container: options.container,
-      onRestart: () => this.restart()
+      onRestart: () => this.restart(),
+      onContinue: () => this.proceedToNextStage()
     })
     this.player = new Player({
       camera: this.camera.instance,
@@ -106,7 +111,15 @@ export class Game {
     this.handleResize()
     window.addEventListener('resize', this.resizeHandler)
     window.addEventListener('keydown', this.shopKeyHandler)
+    window.addEventListener('keydown', this.stageClearKeyHandler)
     this.animationFrameId = requestAnimationFrame(this.loop)
+
+    // Auto-spawn first boss after 15 seconds
+    setTimeout(() => {
+      if (this.currentStage === 1 && !this.bossActive) {
+        this.spawnBoss('dreadnought')
+      }
+    }, 15000)
   }
 
   dispose(): void {
@@ -125,6 +138,7 @@ export class Game {
     this.partsManager.dispose()
     window.removeEventListener('resize', this.resizeHandler)
     window.removeEventListener('keydown', this.shopKeyHandler)
+    window.removeEventListener('keydown', this.stageClearKeyHandler)
   }
 
   private stop(): void {
@@ -143,7 +157,7 @@ export class Game {
   }
 
   private update(delta: number): void {
-    if (this.isGameOver || this.shop.isVisible()) {
+    if (this.isGameOver || this.shop.isVisible() || this.stageClear.isVisible()) {
       return
     }
 
@@ -179,18 +193,6 @@ export class Game {
       this.hud.addHP(-10)
       if (this.hud.getHP() <= 0) {
         this.triggerGameOver()
-      }
-    }
-
-    // Boss spawn check
-    const killCount = this.enemies.getKillCount()
-    if (!this.bossActive && !this.boss.isActive()) {
-      if (killCount >= 100) {
-        this.spawnBoss('annihilator')
-      } else if (killCount >= 50) {
-        this.spawnBoss('destroyer')
-      } else if (killCount >= 20) {
-        this.spawnBoss('dreadnought')
       }
     }
 
@@ -235,8 +237,10 @@ export class Game {
 
   private restart(): void {
     this.isGameOver = false
+    this.isFinalVictory = false
     this.bossActive = false
     this.currentBossType = null
+    this.currentStage = 1
     this.hud.reset()
     this.player.object.position.set(0, 0, 0)
 
@@ -249,6 +253,13 @@ export class Game {
     }
     this.bossHealthBar.hide()
     this.enemies.setSpawningEnabled(true)
+
+    // Respawn first boss after 15 seconds
+    setTimeout(() => {
+      if (this.currentStage === 1 && !this.bossActive) {
+        this.spawnBoss('dreadnought')
+      }
+    }, 15000)
   }
 
   private spawnBoss(type: BossType): void {
@@ -274,7 +285,6 @@ export class Game {
   private handleBossDefeat(): void {
     this.bossActive = false
     this.bossHealthBar.hide()
-    this.enemies.setSpawningEnabled(true)
 
     // Award boss cores based on type
     const bossCoreDrops: Record<BossType, number> = {
@@ -289,10 +299,41 @@ export class Game {
     this.hud.addScore(bossScore)
     this.partsManager.addScore(bossScore)
 
-    // Show stage clear
-    this.stageClear.show(this.hud.getScore(), 1)
+    // Check if final boss defeated
+    if (this.currentStage === 3) {
+      this.triggerFinalVictory(coreCount)
+    } else {
+      // Show stage clear for stages 1-2
+      this.stageClear.show(this.hud.getScore(), coreCount, false)
+    }
 
     this.currentBossType = null
+  }
+
+  private proceedToNextStage(): void {
+    this.currentStage++
+    this.enemies.setSpawningEnabled(true)
+
+    // Spawn next boss after 5 seconds
+    setTimeout(() => {
+      if (this.currentStage <= 3) {
+        const nextBoss = this.stageSequence[this.currentStage - 1]
+        this.spawnBoss(nextBoss)
+      }
+    }, 5000)
+  }
+
+  private triggerFinalVictory(coreCount: number): void {
+    this.isFinalVictory = true
+    // Show final victory screen
+    this.stageClear.show(this.hud.getScore(), coreCount, true)
+  }
+
+  private handleStageClearKey(e: KeyboardEvent): void {
+    if (e.key === ' ' && this.stageClear.isVisible() && !this.isFinalVictory) {
+      this.stageClear.hide()
+      this.proceedToNextStage()
+    }
   }
 
   private scrollFloor(delta: number): void {

@@ -1,15 +1,20 @@
 export type StageClearOptions = {
   container: HTMLElement
   onRestart: () => void
+  onContinue?: () => void
 }
 
 export class StageClear {
   private readonly root: HTMLDivElement
   private readonly onRestart: () => void
+  private readonly onContinue?: () => void
+  private readonly actionButton: HTMLButtonElement
   private visible = false
+  private isFinalStage = false
 
   constructor(options: StageClearOptions) {
     this.onRestart = options.onRestart
+    this.onContinue = options.onContinue
 
     this.root = document.createElement('div')
     this.root.style.cssText = `
@@ -58,9 +63,9 @@ export class StageClear {
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     `
 
-    const restartButton = document.createElement('button')
-    restartButton.textContent = 'RESTART (R)'
-    restartButton.style.cssText = `
+    this.actionButton = document.createElement('button')
+    this.actionButton.textContent = 'CONTINUE (Space)'
+    this.actionButton.style.cssText = `
       font-family: monospace;
       font-size: 20px;
       padding: 12px 40px;
@@ -72,28 +77,37 @@ export class StageClear {
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
       transition: background 0.2s;
     `
-    restartButton.addEventListener('mouseenter', () => {
-      restartButton.style.background = '#059669'
+    this.actionButton.addEventListener('mouseenter', () => {
+      this.actionButton.style.background = '#059669'
     })
-    restartButton.addEventListener('mouseleave', () => {
-      restartButton.style.background = '#10b981'
+    this.actionButton.addEventListener('mouseleave', () => {
+      this.actionButton.style.background = '#10b981'
     })
-    restartButton.addEventListener('click', () => this.handleRestart())
+    this.actionButton.addEventListener('click', () => this.handleAction())
 
     content.appendChild(title)
     content.appendChild(scoreDisplay)
     content.appendChild(bossCoreDisplay)
-    content.appendChild(restartButton)
+    content.appendChild(this.actionButton)
     this.root.appendChild(content)
     options.container.appendChild(this.root)
   }
 
-  show(finalScore: number, bossCoresGained: number): void {
+  show(finalScore: number, bossCoresGained: number, isFinalStage = false): void {
+    this.isFinalStage = isFinalStage
+
     const scoreDisplay = this.root.querySelector('#stage-clear-score')!
-    scoreDisplay.textContent = `Final Score: ${finalScore}`
+    scoreDisplay.textContent = `${isFinalStage ? 'Final Score' : 'Score'}: ${finalScore}`
 
     const coreDisplay = this.root.querySelector('#stage-clear-cores')!
     coreDisplay.textContent = `+${bossCoresGained} Boss Core${bossCoresGained !== 1 ? 's' : ''}`
+
+    // Update button text based on stage
+    if (isFinalStage) {
+      this.actionButton.textContent = 'RESTART (R)'
+    } else {
+      this.actionButton.textContent = 'CONTINUE (Space)'
+    }
 
     this.root.style.display = 'flex'
     this.visible = true
@@ -108,9 +122,13 @@ export class StageClear {
     return this.visible
   }
 
-  private handleRestart(): void {
+  private handleAction(): void {
     this.hide()
-    this.onRestart()
+    if (this.isFinalStage) {
+      this.onRestart()
+    } else {
+      this.onContinue?.()
+    }
   }
 
   dispose(): void {
